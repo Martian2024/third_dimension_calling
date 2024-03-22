@@ -32,6 +32,12 @@ class Point:
     
     def __sub__(self, vector: Vector):
         return self + (vector * -1)
+    
+class Edge:
+    def __init__(self, point1: Point, point2: Point):
+        self.points = [point1, point2]
+
+    
 
 class Camera:
     def __init__(self, position: Point, angle: Union[int, float]):
@@ -53,10 +59,9 @@ class Camera:
             try:
                 vector = Vector(i.x, i.y, i.z)
                 new_angle = degrees(atan(vector.z / vector.x)) - self.angle
-                if new_angle <= self.vision:
-                    new_x = sqrt(vector.x ** 2 + vector.z ** 2) * cos(radians(new_angle))
-                    new_z = sqrt(vector.x ** 2 + vector.z ** 2) * sin(radians(new_angle))
-                    rotated_points.append(Point(new_x, i.y, new_z))
+                new_x = sqrt(vector.x ** 2 + vector.z ** 2) * cos(radians(new_angle))
+                new_z = sqrt(vector.x ** 2 + vector.z ** 2) * sin(radians(new_angle))
+                rotated_points.append(Point(new_x, i.y, new_z))
             except ZeroDivisionError:
                 pass
         return rotated_points
@@ -65,9 +70,9 @@ class Camera:
 
 
     def render_points(self, points):
+        return_list = []
         points = self.translate_points(points)
         points = self.rotate_points_y(points)
-        return_list = []
         for i in points:
             vector = Vector(i.x, i.y, i.z)
             k = vector.x 
@@ -79,4 +84,11 @@ class Camera:
                 pass
 
         return return_list
+    
+    def render_edges(self, edges):
+        return_list = []
+        for i in edges:
+            return_list.append(self.render_points(i.points))
+        return return_list
+
 

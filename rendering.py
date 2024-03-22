@@ -1,5 +1,5 @@
 import pygame
-from main import Point, Vector, Camera
+from main import Point, Vector, Camera, Edge
 
 WIDTH = 500  
 HEIGHT = 500 
@@ -21,13 +21,26 @@ camera = Camera(Point(0, 0, 0), 0)
 
 A = Point(2, -1, 1)
 B = Point(2, 1, 1)
-C = Point(2, -1, -1)
-D = Point(2, 1, -1)
+C = Point(2, 1, -1)
+D = Point(2, -1, -1)
 
 A1 = Point(3, -1, 1)
 B1 = Point(3, 1, 1)
-C1 = Point(3, -1, -1)
-D1 = Point(3, 1, -1)
+C1 = Point(3, 1, -1)
+D1 = Point(3, -1, -1)
+
+AB = Edge(A, B)
+BC = Edge(B, C)
+CD = Edge(C, D)
+DA = Edge(D, A)
+AA1 = Edge(A, A1)
+BB1 = Edge(B, B1)
+CC1 = Edge(C, C1)
+DD1 = Edge(D, D1)
+A1B1 = Edge(A1, B1)
+B1C1 = Edge(B1, C1)
+C1D1 = Edge(C1, D1)
+D1A1 = Edge(D1, A1)
 
 running = True
 while running:
@@ -54,9 +67,11 @@ while running:
             camera.position.y -= 1
 
     screen.fill(BLACK)
-    for i in camera.render_points([A, B, C, D, A1, B1, C1, D1]):
-        pos = (i[0] * (WIDTH / camera.plane_side) + WIDTH // 2, -1 * i[1] * (HEIGHT / camera.plane_side) + HEIGHT // 2)
-        pygame.draw.circle(screen, WHITE, pos, 5)
+    for i in camera.render_edges([AB, BC, CD, DA, AA1, BB1, CC1, DD1, A1B1, B1C1, C1D1, D1A1]):
+        pos1 = (i[0][0] * (WIDTH / camera.plane_side) + WIDTH // 2, -1 * i[0][1] * (HEIGHT / camera.plane_side) + HEIGHT // 2)
+        pos2 = (i[1][0] * (WIDTH / camera.plane_side) + WIDTH // 2, -1 * i[1][1] * (HEIGHT / camera.plane_side) + HEIGHT // 2)
+        pygame.draw.line(screen, WHITE, pos1, pos2, 5)
     pygame.display.flip()
 
 pygame.quit()
+#TODO: fix edges points that are not rendering
