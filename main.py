@@ -77,8 +77,8 @@ class Camera:
             vector = Vector(i.x, i.y, i.z)
             k = vector.x 
             try:
-                new_x = vector.z / k #не исправлять, тут должен быть z
-                new_y = vector.y / k
+                new_x = atan(vector.z / vector.x)
+                new_y = atan(vector.y / vector.x)
                 return_list.append((new_x, new_y))
             except ZeroDivisionError:
                 pass
