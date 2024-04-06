@@ -47,7 +47,13 @@ p1 = Point(1, -1, 1)
 p2 = Point(2, 0, 2)
 p3 = Point(1, 1, 1)
 
-POLYGONS = [Polygon([A, B, C]), Polygon([A1, B1, C1])]
+POLYGONS = [
+            Polygon([C, C1, D1]), Polygon([C, D1, D]),
+            Polygon([A1, B1, B]), Polygon([A1, B, A]), 
+            Polygon([B1, C1, C]), Polygon([C, B, B1]),
+            Polygon([A, A1, D1]), Polygon([A, D1, D]),
+            Polygon([B, B1, C1]), Polygon([B, C1, C]),
+            Polygon([A1, B1, C1]), Polygon([A1, C1, D1])]
 
 running = True
 while running:
@@ -81,13 +87,13 @@ while running:
 
     screen.fill(BLACK)
     starting_color = WHITE
-    for i in sorted(POLYGONS, key=lambda x: camera.getDistance(x), reverse=True):
+    for i in sorted(POLYGONS, key=lambda x: (camera.getDistance(x), camera.get_distance_to_point(x.center)), reverse=True):
         points = camera.render_polygon(i)
         pos1 = (points[0][0] * (WIDTH / radians(camera.vision)) + WIDTH // 2, -1 * points[0][1] * (HEIGHT / radians(camera.vision)) + HEIGHT // 2)
         pos2 = (points[1][0] * (WIDTH / radians(camera.vision)) + WIDTH // 2, -1 * points[1][1] * (HEIGHT / radians(camera.vision)) + HEIGHT // 2)
         pos3 = (points[2][0] * (WIDTH / radians(camera.vision)) + WIDTH // 2, -1 * points[2][1] * (HEIGHT / radians(camera.vision)) + HEIGHT // 2)
         pygame.draw.polygon(screen, starting_color, [pos1, pos2, pos3])
-        starting_color = (starting_color[0] - 100, *starting_color[1:])
+        starting_color = (starting_color[0] - 255 / len(POLYGONS), *starting_color[1:])
     pygame.display.flip()
     
 
@@ -95,3 +101,4 @@ pygame.quit()
 #TODO: fix edges points that are not rendering
 #TODO: write vector multiplication as vector's magic method
 #TODO: rewrite translation to new basis as a new method
+#TODO: fix visibility of objects behind the camera

@@ -119,25 +119,27 @@ class Camera:
         v2_args = {'x': v2.x, 'y': v2.y, 'z': v2.z}
         intersec_point_args = {'x': intersec_point.x, 'y': intersec_point.y, 'z': intersec_point.z}
         o_args = {'x': polygon.points[1].x, 'y': polygon.points[1].y, 'z': polygon.points[1].z}
-        if v1.x != 0:
-            c1 = 'x'
-            if v2.y != 0:
-                c2 = 'y'
+
+        if v2.x != 0:
+            c2 = 'x'
+            if v1.y != 0:
+                c1 = 'y'
             else:
-                c2 = 'z'
-        elif v1.y != 0:
-            c1 = 'y'
-            if v2.x != 0:
-                c2 = 'x '                       #может наебнуться
+                c1 = 'z'
+        elif v2.y != 0:
+            c2 = 'y'
+            if v1.x != 0:
+                c1 = 'x'                       #может наебнуться
             else:
-                c2 = 'z'
+                c1 = 'z'
         else:
-            c1 = 'z'
-            if v2.x != 0:
-                c2 = 'x'
+            c2 = 'z'
+            if v1.x != 0:
+                c1 = 'x'
             else:
-                c2 = 'y'
-        y = (intersec_point_args[c2] - (intersec_point_args[c1] - o_args[c1]) * v1_args[c2] / v1_args[c1]) / (-1 * (v2_args[c1] * v1_args[c2] / v1_args[c1] + v2_args[c2]))
+                c1 = 'y'
+        
+        y = (intersec_point_args[c2] - o_args[c2] - (intersec_point_args[c1] - o_args[c1]) * v1_args[c2] / v1_args[c1]) / (-1 * v2_args[c1] * v1_args[c2] / v1_args[c1] + v2_args[c2])
         x = (intersec_point_args[c1] - o_args[c1] - y * v2_args[c1]) / v1_args[c1]
 
         return x, y
@@ -207,9 +209,14 @@ class Camera:
     
     def render_polygon(self, polygon):
         return self.render_points(polygon.points)
+    
+    def get_distance_to_point(self, point):
+        return sqrt((point.x - self.position.x) ** 2 + (point.y - self.position.y) ** 2 + (point.z - self.position.z) ** 2 )
 
 class Polygon:
     def __init__(self, points):
         self.points = points
+        midpoint = points[1] + Vector(points[2].x - points[1].x, points[2].y - points[1].y, points[2].z - points[1].z) * (1 / 2)
+        self.center = points[0] + Vector(midpoint.x - points[0].x, midpoint.y - points[0].y, midpoint.z - points[0].z) * (2 / 3)
 
     
