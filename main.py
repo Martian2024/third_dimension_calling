@@ -54,6 +54,9 @@ class Camera:
         self.angle_z = angle_z
         self.vision = 60
         self.plane_side = 2 * tan(radians(self.vision))
+        self.width = 500  
+        self.height = 500 
+        self.fps = 30
 
     def translate_points(self, points):
         translated_points = []
@@ -114,11 +117,11 @@ class Camera:
             return_list.append(self.render_points(i.points))
         return return_list
     
-    def translate_to_new_basis(self, polygon, intersec_point, v1, v2):
+    def translate_to_new_basis(self, polygon, intersec_point, v1, v2, o_point):
         v1_args = {'x': v1.x, 'y': v1.y, 'z': v1.z}
         v2_args = {'x': v2.x, 'y': v2.y, 'z': v2.z}
         intersec_point_args = {'x': intersec_point.x, 'y': intersec_point.y, 'z': intersec_point.z}
-        o_args = {'x': polygon.points[1].x, 'y': polygon.points[1].y, 'z': polygon.points[1].z}
+        o_args = {'x': o_point.x, 'y': o_point.y, 'z': o_point.z}
 
         if v2.x != 0:
             c2 = 'x'
@@ -145,9 +148,9 @@ class Camera:
         return x, y
     
     def getDistance(self, polygon):
-        BA = Vector(polygon.points[1].x - polygon.points[0].x, polygon.points[1].y - polygon.points[0].y, polygon.points[1].z - polygon.points[0].z)
+        BA = Vector(polygon.points[0].x - polygon.points[1].x, polygon.points[0].y - polygon.points[1].y, polygon.points[0].z - polygon.points[1].z)
         BC = Vector(polygon.points[2].x - polygon.points[1].x, polygon.points[2].y - polygon.points[1].y, polygon.points[2].z - polygon.points[1].z)
-        CA = Vector(polygon.points[2].x - polygon.points[0].x, polygon.points[2].y - polygon.points[0].y, polygon.points[2].z - polygon.points[0].z)
+        CA = Vector(polygon.points[0].x - polygon.points[2].x, polygon.points[0].y - polygon.points[2].y, polygon.points[0].z - polygon.points[2].z)
         normal = Vector(BA.y * BC.z - BA.z * BC.y, BA.z * BC.x - BA.x * BC.z, BA.x * BC.y - BA.y * BC.x)
         length = abs(normal.x * self.position.x + normal.y * self.position.y + normal.z * self.position.z - (normal.x * polygon.points[1].x + normal.y * polygon.points[1].y + normal.z * polygon.points[1].z)) / sqrt(normal.x ** 2 + normal.y ** 2 + normal.z ** 2)
         normal = normal * (length / sqrt(normal.x ** 2 + normal.y ** 2 + normal.z ** 2))
@@ -183,12 +186,15 @@ class Camera:
             #print('AAA')
             return length
         
-        c_BA_BC = self.translate_to_new_basis(polygon, intersec_point, BA, BC)
+        c_BA_BC = self.translate_to_new_basis(polygon, intersec_point, BA, BC, polygon.points[1])
         if c_BA_BC[0] < 0:
+            print('AAAAAAAA')
             dist_BA = DB.length()
         elif c_BA_BC[0] > 1:
+            print('BBBBBBBB')
             dist_BA = DA.length()
         else:
+            print('CCCCCCCC')
             dist_BA = Vector(DA.y * BA.z - DA.z * BA.y, DA.z * BA.x - DA.x * BA.z, DA.x * BA.y - DA.y * BA.x).length() / BA.length()
         if c_BA_BC[1] < 0:
             dist_BC = DB.length()
@@ -196,27 +202,50 @@ class Camera:
             dist_BC = DA.length()
         else:
             dist_BC = Vector(DB.y * BC.z - DB.z * BC.y, DB.z * BC.x - DB.x * BC.z, DB.x * BC.y - DB.y * BC.x).length() / BC.length()
-        c_CA_CB = self.translate_to_new_basis(polygon, intersec_point, CA, BC * -1)
+        c_CA_CB = self.translate_to_new_basis(polygon, intersec_point, CA, BC * -1, polygon.points[2])
         if c_CA_CB[0] < 0:
+            
             dist_CA = DC.length()
         elif c_CA_CB[0] > 1:
+            
             dist_CA = DA.length()
         else:
+            
             dist_CA = Vector(DC.y * CA.z - DC.z * CA.y, DC.z * CA.x - DC.x * CA.z, DC.x * CA.y - DC.y * CA.x).length() / CA.length()
+        print([dist_BA, dist_BC, dist_CA])
+        #print(sqrt(min(dist_BA, dist_BC, dist_CA, DA.length(), DB.length(), DC.length()) ** 2 + length ** 2))
     
 
         return sqrt(min(dist_BA, dist_BC, dist_CA, DA.length(), DB.length(), DC.length()) ** 2 + length ** 2)
     
     def render_polygon(self, polygon):
-        return self.render_points(polygon.points)
+        points = self.render_points(polygon.points)
+        
+        
+        pos1 = (points[0][0] * (self.width / radians(self.vision)) + self.width // 2, -1 * points[0][1] * (self.height / radians(self.vision)) + self.height // 2)
+        pos2 = (points[1][0] * (self.width / radians(self.vision)) + self.width // 2, -1 * points[1][1] * (self.height / radians(self.vision)) + self.height // 2)
+        pos3 = (points[2][0] * (self.width / radians(self.vision)) + self.width // 2, -1 * points[2][1] * (self.height / radians(self.vision)) + self.height // 2)
+        return [max(i * polygon.cos_theta, 0) for i in polygon.color], [pos1, pos2, pos3]
     
     def get_distance_to_point(self, point):
         return sqrt((point.x - self.position.x) ** 2 + (point.y - self.position.y) ** 2 + (point.z - self.position.z) ** 2 )
 
 class Polygon:
-    def __init__(self, points):
+    def __init__(self, points, color, light_source):
         self.points = points
         midpoint = points[1] + Vector(points[2].x - points[1].x, points[2].y - points[1].y, points[2].z - points[1].z) * (1 / 2)
         self.center = points[0] + Vector(midpoint.x - points[0].x, midpoint.y - points[0].y, midpoint.z - points[0].z) * (2 / 3)
+        self.color = color
 
+        BA = Vector(points[0].x - points[1].x, points[0].y - points[1].y, points[0].z - points[1].z)
+        BC = Vector(points[2].x - points[1].x, points[2].y - points[1].y, points[2].z - points[1].z)
+        normal = Vector(BA.y * BC.z - BA.z * BC.y, BA.z * BC.x - BA.x * BC.z, BA.x * BC.y - BA.y * BC.x)
+        pointing_vector = Vector(light_source.x - self.center.x, light_source.y - self.center.y, light_source.z - self.center.z)
+        self.cos_theta = abs((pointing_vector.x * normal.x + pointing_vector.y * normal.y + pointing_vector.z * normal.z) / (pointing_vector.length() * normal.length()))
+        
+
+
+class LightSource(Point):
+    def __init__(self, x, y, z):
+        super().__init__(x, y, z)
     
