@@ -186,37 +186,48 @@ class Camera:
             #print('AAA')
             return length
         
-        c_BA_BC = self.translate_to_new_basis(polygon, intersec_point, BA, BC, polygon.points[1])
-        if c_BA_BC[0] < 0:
-            print('AAAAAAAA')
+        c_BA = self.get_projection(BA, DB)
+        
+        if c_BA < 0:
+            #print('ba1')
             dist_BA = DB.length()
-        elif c_BA_BC[0] > 1:
-            print('BBBBBBBB')
+        elif c_BA > 1:
+            #print('ba2')
             dist_BA = DA.length()
         else:
-            print('CCCCCCCC')
+            #print('ba3')
             dist_BA = Vector(DA.y * BA.z - DA.z * BA.y, DA.z * BA.x - DA.x * BA.z, DA.x * BA.y - DA.y * BA.x).length() / BA.length()
-        if c_BA_BC[1] < 0:
+
+        c_BC = self.get_projection(BC, DB)
+        
+        if c_BC < 0:
+            #print('bc1')
             dist_BC = DB.length()
-        elif c_BA_BC[1] > 1:
-            dist_BC = DA.length()
+        elif c_BC > 1:
+            #print('bc2')
+            dist_BC = DC.length()
         else:
+            #print('bc3')
             dist_BC = Vector(DB.y * BC.z - DB.z * BC.y, DB.z * BC.x - DB.x * BC.z, DB.x * BC.y - DB.y * BC.x).length() / BC.length()
-        c_CA_CB = self.translate_to_new_basis(polygon, intersec_point, CA, BC * -1, polygon.points[2])
-        if c_CA_CB[0] < 0:
-            
+
+        c_CA = self.get_projection(CA, DC)
+        
+        if c_CA < 0:
+            #print('ca1')
             dist_CA = DC.length()
-        elif c_CA_CB[0] > 1:
-            
+        elif c_CA > 1:
+            #print('ca2')
             dist_CA = DA.length()
         else:
-            
+            #print('ca3')
             dist_CA = Vector(DC.y * CA.z - DC.z * CA.y, DC.z * CA.x - DC.x * CA.z, DC.x * CA.y - DC.y * CA.x).length() / CA.length()
-        print([dist_BA, dist_BC, dist_CA])
+
+        #print([dist_BA, dist_BC, dist_CA])
+        #print(length)
         #print(sqrt(min(dist_BA, dist_BC, dist_CA, DA.length(), DB.length(), DC.length()) ** 2 + length ** 2))
     
 
-        return sqrt(min(dist_BA, dist_BC, dist_CA, DA.length(), DB.length(), DC.length()) ** 2 + length ** 2)
+        return sqrt(min(dist_BA, dist_BC, dist_CA) ** 2 + length ** 2)
     
     def render_polygon(self, polygon):
         points = self.render_points(polygon.points)
@@ -229,6 +240,9 @@ class Camera:
     
     def get_distance_to_point(self, point):
         return sqrt((point.x - self.position.x) ** 2 + (point.y - self.position.y) ** 2 + (point.z - self.position.z) ** 2 )
+    
+    def get_projection(self, v1, v2):
+        return (v1.x * v2.x + v1.y * v2.y + v1.z * v2.z) / v1.length()
 
 class Polygon:
     def __init__(self, points, color, light_source):

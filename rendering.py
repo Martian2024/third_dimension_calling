@@ -9,9 +9,11 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
+TRESHOLD = 5
+
 pygame.init()
 #pygame.mixer.init()  # для звука
-camera = Camera(Point(0, 0, 0), 0, 0)
+camera = Camera(Point(0, -4, 0), 0, 0)
 screen = pygame.display.set_mode((camera.width, camera.height))
 pygame.display.set_caption("My Game")
 clock = pygame.time.Clock()
@@ -56,19 +58,19 @@ p3 = Point(1, 1, 1)
 
 LIGHTSOURCE = LightSource(5, 5, 5)
 
-POLYGONS = [#Polygon([A, B, C], BLUE, LIGHTSOURCE), Polygon([A, C, D], BLUE, LIGHTSOURCE), #называем вершины против часовой стрелки
-            #Polygon([C, C1, D1], WHITE, LIGHTSOURCE), Polygon([C, D1, D], WHITE, LIGHTSOURCE),
+POLYGONS = [Polygon([A, B, C], BLUE, LIGHTSOURCE), #Polygon([A, C, D], BLUE, LIGHTSOURCE), #называем вершины против часовой стрелки             Polygon([C, C1, D1], WHITE, LIGHTSOURCE), Polygon([C, D1, D], WHITE, LIGHTSOURCE),
             Polygon([A1, B, A], WHITE, LIGHTSOURCE), 
             #Polygon([A, A1, D1], WHITE, LIGHTSOURCE), Polygon([A, D1, D], WHITE, LIGHTSOURCE),
             #Polygon([B, B1, C1], WHITE, LIGHTSOURCE), Polygon([B, C1, C], WHITE, LIGHTSOURCE),
+            #Polygon([C1, C, D], WHITE, LIGHTSOURCE), Polygon([C1, D, D1], WHITE, LIGHTSOURCE),
             #Polygon([A1, B1, C1], WHITE, LIGHTSOURCE), Polygon([A1, C1, D1], WHITE, LIGHTSOURCE),
-            #Polygon([A2, B2, C2], WHITE, LIGHTSOURCE), Polygon([A2, C2, D2], WHITE, LIGHTSOURCE),
-            #Polygon([C2, C3, D3], WHITE, LIGHTSOURCE), Polygon([C2, D3, D2], WHITE, LIGHTSOURCE),
-            #Polygon([A3, B3, B2], WHITE, LIGHTSOURCE), Polygon([A3, B2, A2], WHITE, LIGHTSOURCE), 
-            #Polygon([B3, C3, C2], WHITE, LIGHTSOURCE), Polygon([C2, B2, B3], WHITE, LIGHTSOURCE),
-            #Polygon([A2, A3, D3], WHITE, LIGHTSOURCE), Polygon([A2, D3, D2], WHITE, LIGHTSOURCE),
-            #Polygon([B2, B3, C3], WHITE, LIGHTSOURCE), Polygon([B2, C3, C2], WHITE, LIGHTSOURCE),
-            #Polygon([A3, B3, C3], WHITE, LIGHTSOURCE), Polygon([A3, C3, D3], WHITE, LIGHTSOURCE)]
+            ##Polygon([A2, B2, C2], WHITE, LIGHTSOURCE), Polygon([A2, C2, D2], WHITE, LIGHTSOURCE),
+            ##Polygon([C2, C3, D3], WHITE, LIGHTSOURCE), Polygon([C2, D3, D2], WHITE, LIGHTSOURCE),
+            ##Polygon([A3, B3, B2], WHITE, LIGHTSOURCE), Polygon([A3, B2, A2], WHITE, LIGHTSOURCE), 
+            ##Polygon([B3, C3, C2], WHITE, LIGHTSOURCE), Polygon([C2, B2, B3], WHITE, LIGHTSOURCE),
+            ##Polygon([A2, A3, D3], WHITE, LIGHTSOURCE), Polygon([A2, D3, D2], WHITE, LIGHTSOURCE),
+            ##Polygon([B2, B3, C3], WHITE, LIGHTSOURCE), Polygon([B2, C3, C2], WHITE, LIGHTSOURCE),
+            ##Polygon([A3, B3, C3], WHITE, LIGHTSOURCE), Polygon([A3, C3, D3], WHITE, LIGHTSOURCE)]
 ]
 
 #POLYGONS = [Polygon([Point(0, 0, 0), Point(0, 1, 0), Point(0, 0, 1)])]
@@ -107,7 +109,8 @@ while running:
     pos = camera.render_points([LIGHTSOURCE])[0]
     pos = (pos[0] * (camera.width / radians(camera.vision)) + camera.width // 2, -1 * pos[1] * (camera.height / radians(camera.vision)) + camera.height // 2)
     pygame.draw.circle(screen, WHITE, pos, 5)
-    for i in sorted(POLYGONS, key=lambda x: (camera.getDistance(x), camera.get_distance_to_point(x.center)), reverse=True):
+    for i in sorted(POLYGONS, key=lambda x: (round(camera.getDistance(x), TRESHOLD), camera.get_distance_to_point(x.center)), reverse=True):
+        print(camera.get_distance_to_point(i.center))
         pygame.draw.polygon(screen, *camera.render_polygon(i))
     pygame.display.flip()
     
