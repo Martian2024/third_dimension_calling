@@ -57,6 +57,7 @@ class Camera:
         self.width = 500  
         self.height = 500 
         self.fps = 30
+        self.background = 30
 
     def translate_points(self, points):
         translated_points = []
@@ -148,8 +149,8 @@ class Camera:
         return x, y
     
     def getDistance(self, polygon):
-        BA = Vector(polygon.points[0].x - polygon.points[1].x, polygon.points[0].y - polygon.points[1].y, polygon.points[0].z - polygon.points[1].z)
-        BC = Vector(polygon.points[2].x - polygon.points[1].x, polygon.points[2].y - polygon.points[1].y, polygon.points[2].z - polygon.points[1].z)
+        BC = Vector(polygon.points[0].x - polygon.points[1].x, polygon.points[0].y - polygon.points[1].y, polygon.points[0].z - polygon.points[1].z)
+        BA = Vector(polygon.points[2].x - polygon.points[1].x, polygon.points[2].y - polygon.points[1].y, polygon.points[2].z - polygon.points[1].z)
         CA = Vector(polygon.points[0].x - polygon.points[2].x, polygon.points[0].y - polygon.points[2].y, polygon.points[0].z - polygon.points[2].z)
         normal = Vector(BA.y * BC.z - BA.z * BC.y, BA.z * BC.x - BA.x * BC.z, BA.x * BC.y - BA.y * BC.x)
         length = abs(normal.x * self.position.x + normal.y * self.position.y + normal.z * self.position.z - (normal.x * polygon.points[1].x + normal.y * polygon.points[1].y + normal.z * polygon.points[1].z)) / sqrt(normal.x ** 2 + normal.y ** 2 + normal.z ** 2)
@@ -236,7 +237,7 @@ class Camera:
         pos1 = (points[0][0] * (self.width / radians(self.vision)) + self.width // 2, -1 * points[0][1] * (self.height / radians(self.vision)) + self.height // 2)
         pos2 = (points[1][0] * (self.width / radians(self.vision)) + self.width // 2, -1 * points[1][1] * (self.height / radians(self.vision)) + self.height // 2)
         pos3 = (points[2][0] * (self.width / radians(self.vision)) + self.width // 2, -1 * points[2][1] * (self.height / radians(self.vision)) + self.height // 2)
-        return [max(i * polygon.cos_theta, 0) for i in polygon.color], [pos1, pos2, pos3]
+        return [max(i * polygon.cos_theta, self.background) for i in polygon.color], [pos1, pos2, pos3]
     
     def get_distance_to_point(self, point):
         return sqrt((point.x - self.position.x) ** 2 + (point.y - self.position.y) ** 2 + (point.z - self.position.z) ** 2 )
@@ -251,11 +252,11 @@ class Polygon:
         self.center = points[0] + Vector(midpoint.x - points[0].x, midpoint.y - points[0].y, midpoint.z - points[0].z) * (2 / 3)
         self.color = color
 
-        BA = Vector(points[0].x - points[1].x, points[0].y - points[1].y, points[0].z - points[1].z)
-        BC = Vector(points[2].x - points[1].x, points[2].y - points[1].y, points[2].z - points[1].z)
-        normal = Vector(BA.y * BC.z - BA.z * BC.y, BA.z * BC.x - BA.x * BC.z, BA.x * BC.y - BA.y * BC.x)
+        BC = Vector(points[0].x - points[1].x, points[0].y - points[1].y, points[0].z - points[1].z)
+        BA = Vector(points[2].x - points[1].x, points[2].y - points[1].y, points[2].z - points[1].z)
+        self.normal = Vector(BA.y * BC.z - BA.z * BC.y, BA.z * BC.x - BA.x * BC.z, BA.x * BC.y - BA.y * BC.x)
         pointing_vector = Vector(light_source.x - self.center.x, light_source.y - self.center.y, light_source.z - self.center.z)
-        self.cos_theta = abs((pointing_vector.x * normal.x + pointing_vector.y * normal.y + pointing_vector.z * normal.z) / (pointing_vector.length() * normal.length()))
+        self.cos_theta = (pointing_vector.x * self.normal.x + pointing_vector.y * self.normal.y + pointing_vector.z * self.normal.z) / (pointing_vector.length() * self.normal.length())
         
 
 
