@@ -1,5 +1,5 @@
 import pygame
-from main import Point, Vector, Camera, Edge, Polygon, LightSource
+from main import Point, Vector, Camera, Polygon, LightSource
 from math import radians
 
 
@@ -39,18 +39,7 @@ B3 = Point(3, 1, 3)
 C3 = Point(3, 1, 2)
 D3 = Point(3, -1, 2)
 
-AB = Edge(A, B)
-BC = Edge(B, C)
-CD = Edge(C, D)
-DA = Edge(D, A)
-AA1 = Edge(A, A1)
-BB1 = Edge(B, B1)
-CC1 = Edge(C, C1)
-DD1 = Edge(D, D1)
-A1B1 = Edge(A1, B1)
-B1C1 = Edge(B1, C1)
-C1D1 = Edge(C1, D1)
-D1A1 = Edge(D1, A1)
+
 
 p1 = Point(1, -1, 1)
 p2 = Point(2, 0, 2)
@@ -63,15 +52,16 @@ POLYGONS = [Polygon([A, B, C], BLUE, LIGHTSOURCE), Polygon([A, C, D], BLUE, LIGH
             Polygon([A, D1, A1], WHITE, LIGHTSOURCE), Polygon([A, D, D1], WHITE, LIGHTSOURCE),
             Polygon([B, B1, C1], WHITE, LIGHTSOURCE), Polygon([B, C1, C], WHITE, LIGHTSOURCE),
             Polygon([C, C1, D], WHITE, LIGHTSOURCE), Polygon([C1, D1, D], WHITE, LIGHTSOURCE),
-            Polygon([A1, C1, B1], WHITE, LIGHTSOURCE), Polygon([A1, C1, D1], WHITE, LIGHTSOURCE),
-            ##Polygon([A2, B2, C2], WHITE, LIGHTSOURCE), Polygon([A2, C2, D2], WHITE, LIGHTSOURCE),
-            ##Polygon([C2, C3, D3], WHITE, LIGHTSOURCE), Polygon([C2, D3, D2], WHITE, LIGHTSOURCE),
-            ##Polygon([A3, B3, B2], WHITE, LIGHTSOURCE), Polygon([A3, B2, A2], WHITE, LIGHTSOURCE), 
-            ##Polygon([B3, C3, C2], WHITE, LIGHTSOURCE), Polygon([C2, B2, B3], WHITE, LIGHTSOURCE),
-            ##Polygon([A2, A3, D3], WHITE, LIGHTSOURCE), Polygon([A2, D3, D2], WHITE, LIGHTSOURCE),
-            ##Polygon([B2, B3, C3], WHITE, LIGHTSOURCE), Polygon([B2, C3, C2], WHITE, LIGHTSOURCE),
-            ##Polygon([A3, B3, C3], WHITE, LIGHTSOURCE), Polygon([A3, C3, D3], WHITE, LIGHTSOURCE)]
-]
+           Polygon([A1, C1, B1], WHITE, LIGHTSOURCE), Polygon([A1, C1, D1], WHITE, LIGHTSOURCE),
+           Polygon([A2, B2, C2], WHITE, LIGHTSOURCE), Polygon([A2, C2, D2], WHITE, LIGHTSOURCE),
+           Polygon([C2, C3, D3], WHITE, LIGHTSOURCE), Polygon([C2, D3, D2], WHITE, LIGHTSOURCE),
+            Polygon([A3, B3, B2], WHITE, LIGHTSOURCE), #Polygon([A3, B2, A2], WHITE, LIGHTSOURCE), 
+            Polygon([B3, C3, C2], WHITE, LIGHTSOURCE), Polygon([C2, B2, B3], WHITE, LIGHTSOURCE),
+            Polygon([D3, A3, A2], WHITE, LIGHTSOURCE), Polygon([D2, D3, A2], WHITE, LIGHTSOURCE),
+            Polygon([A3, B3, C3], WHITE, LIGHTSOURCE), Polygon([A3, C3, D3], WHITE, LIGHTSOURCE)]
+
+
+
 
 #POLYGONS = [Polygon([Point(0, 0, 0), Point(0, 1, 0), Point(0, 0, 1)])]
 
@@ -109,6 +99,10 @@ while running:
     pos = camera.render_points([LIGHTSOURCE])[0]
     pos = (pos[0] * (camera.width / radians(camera.vision)) + camera.width // 2, -1 * pos[1] * (camera.height / radians(camera.vision)) + camera.height // 2)
     pygame.draw.circle(screen, WHITE, pos, 5)
+    pos = camera.render_points([B2])[0]
+    pos = (pos[0] * (camera.width / radians(camera.vision)) + camera.width // 2, -1 * pos[1] * (camera.height / radians(camera.vision)) + camera.height // 2)
+    pygame.draw.circle(screen, WHITE, pos, 5)
+    print(camera.position.x, camera.position.y, camera.position.z, camera.angle_y, camera.angle_z)
     for i in sorted(POLYGONS, key=lambda x: (round(camera.getDistance(x), TRESHOLD), camera.get_distance_to_point(x.center)), reverse=True):
         if camera.get_projection(i.normal, Vector(camera.position.x - i.center.x, camera.position.y - i.center.y, camera.position.z - i.center.z)) > 0: #AAAAAAAA
             pygame.draw.polygon(screen, *camera.render_polygon(i))

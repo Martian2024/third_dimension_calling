@@ -1,5 +1,5 @@
 from typing import Union
-from math import sin, cos, tan, sqrt, atan, pi, radians, degrees
+from math import sin, cos, tan, sqrt, atan, pi, radians, degrees, acos, asin
 
 def sign(x):
     if x < 0:
@@ -41,9 +41,9 @@ class Point:
     def __sub__(self, vector: Vector):
         return self + (vector * -1)
     
-class Edge:
+'''class Edge:
     def __init__(self, point1: Point, point2: Point):
-        self.points = [point1, point2]
+        self.points = [point1, point2]'''
 
     
 
@@ -71,28 +71,74 @@ class Camera:
         for i in points:
             try:
                 vector = Vector(i.x, i.y, i.z)
-                new_angle = degrees(atan(vector.z / vector.x)) - self.angle_y
+                if atan(vector.z / vector.x) > 0:
+                    if vector.x > 0:
+                        new_angle = degrees(atan(vector.z / vector.x)) - self.angle_y
+                    else:
+                        new_angle = -180 + degrees(atan(vector.z / vector.x)) - self.angle_y
+                else:
+                    if vector.x > 0:
+                        new_angle = degrees(atan(vector.z / vector.x)) - self.angle_y
+                    else:
+                        new_angle = 180 + degrees(atan(vector.z / vector.x)) - self.angle_y
+                        print(90 + -1 * degrees(atan(vector.z / vector.x)) - self.angle_y)
                 new_x = sqrt(vector.x ** 2 + vector.z ** 2) * cos(radians(new_angle))
                 new_z = sqrt(vector.x ** 2 + vector.z ** 2) * sin(radians(new_angle))
                 rotated_points.append(Point(new_x, i.y, new_z))
             except ZeroDivisionError:
-                pass
+                vector = Vector(i.x, i.y, i.z)  
+                if vector.z > 0:
+                    new_angle = 90 - self.angle_y
+                    new_x = sqrt(vector.x ** 2 + vector.z ** 2) * cos(radians(new_angle))
+                elif vector.z < 0:
+                    new_angle = -90 - self.angle_y
+                    new_x = sqrt(vector.x ** 2 + vector.z ** 2) * cos(radians(new_angle))
+                else:
+                    new_z = 0
+                    new_x = 0
+                new_z = sqrt(vector.x ** 2 + vector.z ** 2) * sin(radians(new_angle))
+                rotated_points.append(Point(new_x, i.y, new_z))
+            #print(list(map(lambda a: [a.x, a.y, a.z], rotated_points)))
         return rotated_points
     
     def rotate_points_z(self, points): #по часовой стрелке - положительный угол
-        rotated_points = []
+        rotated_points = []   
         for i in points:
             try:
                 vector = Vector(i.x, i.y, i.z)
-                new_angle = degrees(atan(vector.y / vector.x)) - self.angle_z
+                if atan(vector.y / vector.x) > 0:
+                    if vector.x > 0:
+                        new_angle = degrees(atan(vector.y / vector.x)) - self.angle_z
+                    else:
+                        new_angle = -180 + degrees(atan(vector.y / vector.x)) - self.angle_z
+                else:
+                    if vector.x > 0:
+                        new_angle = degrees(atan(vector.y / vector.x)) - self.angle_z
+                    else:
+                        new_angle = 180 + degrees(atan(vector.y / vector.x)) - self.angle_z
+
+                '''if vector.x > 0:
+                    new_angle = degrees(atan(vector.y / vector.x)) - self.angle_z
+                else:
+                    new_angle = -1 * (180 - degrees(atan(vector.x / vector.y))) - self.angle_z'''
                 new_x = sqrt(vector.x ** 2 + vector.y ** 2) * cos(radians(new_angle))
                 new_y = sqrt(vector.x ** 2 + vector.y ** 2) * sin(radians(new_angle))
                 rotated_points.append(Point(new_x, new_y, i.z))
             except ZeroDivisionError:
-                pass
-        return rotated_points
+                vector = Vector(i.x, i.y, i.z)
+                if vector.y > 0:
+                    new_angle = 90 - self.angle_z
+                    new_x = sqrt(vector.x ** 2 + vector.y ** 2) * cos(radians(new_angle))
+                elif vector.y < 0:
+                    new_angle = -90 - self.angle_z
+                    new_x = sqrt(vector.x ** 2 + vector.y ** 2) * cos(radians(new_angle))
+                else:                
+                    new_x = 0
+                    new_y = 0
+                new_y = sqrt(vector.x ** 2 + vector.y ** 2) * sin(radians(new_angle))
+                rotated_points.append(Point(new_x, new_y, i.z))
 
-            
+        return rotated_points
 
 
     def render_points(self, points):
@@ -102,21 +148,37 @@ class Camera:
         points = self.rotate_points_z(points)
         for i in points:
             vector = Vector(i.x, i.y, i.z)
-            k = vector.x 
             try:
-                new_x = atan(vector.z / vector.x)
-                new_y = atan(vector.y / vector.x)
+                new_x = asin(vector.z / sqrt(vector.x ** 2 + vector.z ** 2))
+                new_y = asin(vector.y / sqrt(vector.x ** 2 + vector.y ** 2))
                 return_list.append((new_x, new_y))
+                '''if new_x * (self.width / radians(self.vision)) + self.width // 2 > 500:
+                    print(i.x, i.y, i.z, new_x, new_y, new_x * (self.width / radians(self.vision)) + self.width // 2)'''
+                print('AAAAAAAAAA', i.x, i.y, i.z, new_x, new_y)
             except ZeroDivisionError:
-                pass
+                if vector.x ** 2 + vector.y ** 2 == 0:
+                    if vector.z > 0:
+                        new_x = radians(90)
+                    elif vector.z < 0:
+                        new_x = radians(-90)
+                    new_y = 0
+                elif vector.x ** 2 + vector.z ** 2 == 0:
+                    if vector.y > 0:
+                        new_y = radians(90)
+                    elif vector.y < 0:
+                        new_y = radians(-90)
+                    new_x = 0
+                return_list.append((new_x, new_y))
+
+        #print(return_list)
 
         return return_list
     
-    def render_edges(self, edges):
+    '''def render_edges(self, edges):
         return_list = []
         for i in edges:
             return_list.append(self.render_points(i.points))
-        return return_list
+        return return_list'''
     
     def translate_to_new_basis(self, polygon, intersec_point, v1, v2, o_point):
         v1_args = {'x': v1.x, 'y': v1.y, 'z': v1.z}
@@ -232,11 +294,13 @@ class Camera:
     
     def render_polygon(self, polygon):
         points = self.render_points(polygon.points)
+
         
         
         pos1 = (points[0][0] * (self.width / radians(self.vision)) + self.width // 2, -1 * points[0][1] * (self.height / radians(self.vision)) + self.height // 2)
         pos2 = (points[1][0] * (self.width / radians(self.vision)) + self.width // 2, -1 * points[1][1] * (self.height / radians(self.vision)) + self.height // 2)
         pos3 = (points[2][0] * (self.width / radians(self.vision)) + self.width // 2, -1 * points[2][1] * (self.height / radians(self.vision)) + self.height // 2)
+        #print([pos1, pos2, pos3])
         return [max(i * polygon.cos_theta, self.background) for i in polygon.color], [pos1, pos2, pos3]
     
     def get_distance_to_point(self, point):
