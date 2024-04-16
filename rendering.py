@@ -110,9 +110,6 @@ while running:
     
 
 pygame.quit()
-#TODO: fix edges points that are not rendering
 #TODO: write vector multiplication as vector's magic method
-#TODO: rewrite translation to new basis as a new method
 #TODO: fix visibility of objects behind the camera
-#TODO: fix zero division in rotation methods
 #TODO: consider implementing Möller–Trumbore intersection algorithm

@@ -90,13 +90,14 @@ class Camera:
                 if vector.z > 0:
                     new_angle = 90 - self.angle_y
                     new_x = sqrt(vector.x ** 2 + vector.z ** 2) * cos(radians(new_angle))
+                    new_z = sqrt(vector.x ** 2 + vector.z ** 2) * sin(radians(new_angle))
                 elif vector.z < 0:
                     new_angle = -90 - self.angle_y
                     new_x = sqrt(vector.x ** 2 + vector.z ** 2) * cos(radians(new_angle))
+                    new_z = sqrt(vector.x ** 2 + vector.z ** 2) * sin(radians(new_angle))
                 else:
                     new_z = 0
                     new_x = 0
-                new_z = sqrt(vector.x ** 2 + vector.z ** 2) * sin(radians(new_angle))
                 rotated_points.append(Point(new_x, i.y, new_z))
             #print(list(map(lambda a: [a.x, a.y, a.z], rotated_points)))
         return rotated_points
@@ -129,13 +130,15 @@ class Camera:
                 if vector.y > 0:
                     new_angle = 90 - self.angle_z
                     new_x = sqrt(vector.x ** 2 + vector.y ** 2) * cos(radians(new_angle))
+                    new_y = sqrt(vector.x ** 2 + vector.y ** 2) * sin(radians(new_angle))
                 elif vector.y < 0:
                     new_angle = -90 - self.angle_z
                     new_x = sqrt(vector.x ** 2 + vector.y ** 2) * cos(radians(new_angle))
+                    new_y = sqrt(vector.x ** 2 + vector.y ** 2) * sin(radians(new_angle))
                 else:                
                     new_x = 0
                     new_y = 0
-                new_y = sqrt(vector.x ** 2 + vector.y ** 2) * sin(radians(new_angle))
+                
                 rotated_points.append(Point(new_x, new_y, i.z))
 
         return rotated_points
