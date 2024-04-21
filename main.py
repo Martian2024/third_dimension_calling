@@ -1,5 +1,7 @@
 from typing import Union
 from math import sin, cos, tan, sqrt, atan, pi, radians, degrees, acos, asin
+import pygame
+from stl import mesh
 
 def sign(x):
     if x < 0:
@@ -48,16 +50,17 @@ class Point:
     
 
 class Camera:
-    def __init__(self, position: Point, angle_y: Union[int, float], angle_z: Union[int, float]):
+    def __init__(self, position: Point, angle_y: Union[int, float], angle_z: Union[int, float], screen, height, width):
         self.position = position
         self.angle_y = angle_y
         self.angle_z = angle_z
         self.vision = 60
         self.plane_side = 2 * tan(radians(self.vision))
-        self.width = 500  
-        self.height = 500 
+        self.width = width  
+        self.height = height 
         self.fps = 30
         self.background = 30
+        self.screen = screen
 
     def translate_points(self, points):
         translated_points = []
@@ -81,7 +84,7 @@ class Camera:
                         new_angle = degrees(atan(vector.z / vector.x)) - self.angle_y
                     else:
                         new_angle = 180 + degrees(atan(vector.z / vector.x)) - self.angle_y
-                        print(90 + -1 * degrees(atan(vector.z / vector.x)) - self.angle_y)
+                        #print(90 + -1 * degrees(atan(vector.z / vector.x)) - self.angle_y)
                 new_x = sqrt(vector.x ** 2 + vector.z ** 2) * cos(radians(new_angle))
                 new_z = sqrt(vector.x ** 2 + vector.z ** 2) * sin(radians(new_angle))
                 rotated_points.append(Point(new_x, i.y, new_z))
@@ -157,7 +160,7 @@ class Camera:
                 return_list.append((new_x, new_y))
                 '''if new_x * (self.width / radians(self.vision)) + self.width // 2 > 500:
                     print(i.x, i.y, i.z, new_x, new_y, new_x * (self.width / radians(self.vision)) + self.width // 2)'''
-                print('AAAAAAAAAA', i.x, i.y, i.z, new_x, new_y)
+                #print('AAAAAAAAAA', i.x, i.y, i.z, new_x, new_y)
             except ZeroDivisionError:
                 if vector.x ** 2 + vector.y ** 2 == 0:
                     if vector.z > 0:
@@ -311,6 +314,11 @@ class Camera:
     
     def get_projection(self, v1, v2):
         return (v1.x * v2.x + v1.y * v2.y + v1.z * v2.z) / v1.length()
+    
+    def render_mesh(self, mesh):
+        for i in sorted(mesh.polygons, key=lambda x: (self.getDistance(x), self.get_distance_to_point(x.center)), reverse=True):
+            if self.get_projection(i.normal, Vector(self.position.x - i.center.x, self.position.y - i.center.y, self.position.z - i.center.z)) > 0: #AAAAAAAA
+                pygame.draw.polygon(self.screen, *self.render_polygon(i))
 
 class Polygon:
     def __init__(self, points, color, light_source):
@@ -325,6 +333,22 @@ class Polygon:
         pointing_vector = Vector(light_source.x - self.center.x, light_source.y - self.center.y, light_source.z - self.center.z)
         self.cos_theta = (pointing_vector.x * self.normal.x + pointing_vector.y * self.normal.y + pointing_vector.z * self.normal.z) / (pointing_vector.length() * self.normal.length())
         
+class Mesh():
+    def __init__(self, polygons, center=[0, 0, 0]):
+        self.polygons = polygons
+        self.center = center
+
+    def from_file(filepath, color, lightsource, center=[0, 0, 0]):
+        m = mesh.Mesh.from_file(filepath)
+        polygons = []
+        for i in range(len(m.x)):
+            p0 = Point(m.x[i][0], m.z[i][0], m.y[i][0])
+            p1 = Point(m.x[i][1], m.z[i][1], m.y[i][1])
+            p2 = Point(m.x[i][2], m.z[i][2], m.y[i][2])
+            polygon = Polygon([p0, p2, p1], color, lightsource)
+            polygons.append(polygon)
+        
+        return Mesh(polygons, center)
 
 
 class LightSource(Point):
