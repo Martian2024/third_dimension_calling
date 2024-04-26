@@ -299,6 +299,7 @@ class Camera:
         return sqrt(min(dist_BA, dist_BC, dist_CA) ** 2 + length ** 2)
     
     def render_polygon(self, polygon):
+        polygon.update()
         points = self.render_points(polygon.points)
 
         
@@ -317,21 +318,27 @@ class Camera:
     
     def render_mesh(self, mesh):
         for i in sorted(mesh.polygons, key=lambda x: (self.getDistance(x), self.get_distance_to_point(x.center)), reverse=True):
+            #pygame.draw.polygon(self.screen, *self.render_polygon(i))
             if self.get_projection(i.normal, Vector(self.position.x - i.center.x, self.position.y - i.center.y, self.position.z - i.center.z)) > 0: #AAAAAAAA
                 pygame.draw.polygon(self.screen, *self.render_polygon(i))
 
 class Polygon:
     def __init__(self, points, color, light_source):
         self.points = points
-        midpoint = points[1] + Vector(points[2].x - points[1].x, points[2].y - points[1].y, points[2].z - points[1].z) * (1 / 2)
-        self.center = points[0] + Vector(midpoint.x - points[0].x, midpoint.y - points[0].y, midpoint.z - points[0].z) * (2 / 3)
         self.color = color
+        self.light_source = light_source
+        self.update()
 
-        BC = Vector(points[0].x - points[1].x, points[0].y - points[1].y, points[0].z - points[1].z)
-        BA = Vector(points[2].x - points[1].x, points[2].y - points[1].y, points[2].z - points[1].z)
+    def update(self):
+        midpoint = self.points[1] + Vector(self.points[2].x - self.points[1].x, self.points[2].y - self.points[1].y, self.points[2].z - self.points[1].z) * (1 / 2)
+        self.center = self.points[0] + Vector(midpoint.x - self.points[0].x, midpoint.y - self.points[0].y, midpoint.z - self.points[0].z) * (2 / 3)
+
+        BC = Vector(self.points[0].x - self.points[1].x, self.points[0].y - self.points[1].y, self.points[0].z - self.points[1].z)
+        BA = Vector(self.points[2].x - self.points[1].x, self.points[2].y - self.points[1].y, self.points[2].z - self.points[1].z)
         self.normal = Vector(BA.y * BC.z - BA.z * BC.y, BA.z * BC.x - BA.x * BC.z, BA.x * BC.y - BA.y * BC.x)
-        pointing_vector = Vector(light_source.x - self.center.x, light_source.y - self.center.y, light_source.z - self.center.z)
+        pointing_vector = Vector(self.light_source.x - self.center.x, self.light_source.y - self.center.y, self.light_source.z - self.center.z)
         self.cos_theta = (pointing_vector.x * self.normal.x + pointing_vector.y * self.normal.y + pointing_vector.z * self.normal.z) / (pointing_vector.length() * self.normal.length())
+
         
 class Mesh():
     def __init__(self, polygons, center=[0, 0, 0]):
@@ -349,7 +356,68 @@ class Mesh():
             polygons.append(polygon)
         
         return Mesh(polygons, center)
+    
+    def move(self, vector):
+        for polygon in self.polygons:
+            polygon.points = list(map(lambda point:  point + vector, polygon.points))
+            polygon.update()
 
+    def rotate_y(self, angle, center):
+        for polygon in self.polygons:
+            new_points = []
+            for point in polygon.points:
+                vector = Vector(point.x - center.x, point.y - center.y, point.z - center.z)
+                length = sqrt(vector.x ** 2 + vector.z ** 2)
+                if length != 0:
+                    if vector.z > 0:
+                        old_angle = degrees(acos(vector.x / length))
+                    else:
+                        old_angle = -degrees(acos(vector.x / length))
+                    new_angle = old_angle + angle
+                    new_point = Point(center.x + length * cos(radians(new_angle)), point.y, center.z + length * sin(radians(new_angle)))
+                    new_points.append(new_point)
+                else:
+                    new_points.append(point)
+            polygon.points = new_points
+            polygon.update()
+        
+    def rotate_z(self, angle, center):
+        for polygon in self.polygons:
+            new_points = []
+            for point in polygon.points:
+                vector = Vector(point.x - center.x, point.y - center.y, point.z - center.z)
+                length = sqrt(vector.y ** 2 + vector.x ** 2)
+                if length != 0:
+                    if vector.x > 0:
+                        old_angle = degrees(acos(vector.y / length))
+                    else:
+                        old_angle = -degrees(acos(vector.y / length))
+                    new_angle = old_angle + angle
+                    new_point = Point(center.x + length * sin(radians(new_angle)), center.y + length * cos(radians(new_angle)), point.z)
+                    new_points.append(new_point)
+                else:
+                    new_points.append(point)
+            polygon.points = new_points
+            polygon.update()
+
+    def rotate_x(self, angle, center):
+        for polygon in self.polygons:
+            new_points = []
+            for point in polygon.points:
+                vector = Vector(point.x - center.x, point.y - center.y, point.z - center.z)
+                length = sqrt(vector.y ** 2 + vector.z ** 2)
+                if length != 0:
+                    if vector.z > 0:
+                        old_angle = degrees(acos(vector.y / length))
+                    else:
+                        old_angle = -degrees(acos(vector.y / length))
+                    new_angle = old_angle + angle
+                    new_point = Point(point.x, center.y + length * cos(radians(new_angle)), center.z + length * sin(radians(new_angle)))
+                    new_points.append(new_point)
+                else:
+                    new_points.append(point)
+            polygon.points = new_points
+            polygon.update()
 
 class LightSource(Point):
     def __init__(self, x, y, z):
