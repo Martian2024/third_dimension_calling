@@ -61,8 +61,8 @@ POLYGONS = [Polygon([A, B, C], BLUE, LIGHTSOURCE), Polygon([A, C, D], BLUE, LIGH
             Polygon([D3, A3, A2], WHITE, LIGHTSOURCE), Polygon([D2, D3, A2], WHITE, LIGHTSOURCE),
             Polygon([C3, B3, A3], WHITE, LIGHTSOURCE), Polygon([D3, C3, A3], WHITE, LIGHTSOURCE)]
 
-#MESHES = [Mesh.from_file('untitled.stl', WHITE, LIGHTSOURCE)]
-MESHES = [Mesh(POLYGONS[:12])]
+MESHES = [Mesh.from_file('Chest_01.stl', WHITE, LIGHTSOURCE)]
+#MESHES = [Mesh(POLYGONS[:12])]
 #MESHES = [Mesh([Polygon([A, B, C], BLUE, LIGHTSOURCE)])]
 #print(MESHES[0].polygons[0].points[0].x)
 
@@ -102,8 +102,8 @@ while running:
 
     screen.fill(BLACK)
     #MESHES[0].move(Vector(0, 0, 1))
-    MESHES[0].rotate_y(1, Point(3, 0, 0))
-    MESHES[0].rotate_z(1, Point(3, 0, 0))
+    #MESHES[0].rotate_y(1, Point(3, 0, 0))
+    #MESHES[0].rotate_z(1, Point(3, 0, 0))
     pos = camera.render_points([LIGHTSOURCE])[0]
     pos = (pos[0] * (camera.width / radians(camera.vision)) + camera.width // 2, -1 * pos[1] * (camera.height / radians(camera.vision)) + camera.height // 2)
     pygame.draw.circle(screen, WHITE, pos, 5)
@@ -113,6 +113,7 @@ while running:
     for i in MESHES:
          camera.render_mesh(i)
     pygame.display.flip()
+    print(1)
     
 
 pygame.quit()

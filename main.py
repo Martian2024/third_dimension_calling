@@ -317,10 +317,9 @@ class Camera:
         return (v1.x * v2.x + v1.y * v2.y + v1.z * v2.z) / v1.length()
     
     def render_mesh(self, mesh):
-        for i in sorted(mesh.polygons, key=lambda x: (self.getDistance(x), self.get_distance_to_point(x.center)), reverse=True):
+        for i in sorted(filter(lambda i: self.get_projection(i.normal, Vector(self.position.x - i.center.x, self.position.y - i.center.y, self.position.z - i.center.z)) > 0, mesh.polygons), key=lambda x: (self.getDistance(x), self.get_distance_to_point(x.center)), reverse=True):
             #pygame.draw.polygon(self.screen, *self.render_polygon(i))
-            if self.get_projection(i.normal, Vector(self.position.x - i.center.x, self.position.y - i.center.y, self.position.z - i.center.z)) > 0: #AAAAAAAA
-                pygame.draw.polygon(self.screen, *self.render_polygon(i))
+            pygame.draw.polygon(self.screen, *self.render_polygon(i))
 
 class Polygon:
     def __init__(self, points, color, light_source):
