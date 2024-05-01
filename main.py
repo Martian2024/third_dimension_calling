@@ -2,46 +2,50 @@ from typing import Union
 from math import sin, cos, tan, sqrt, atan, pi, radians, degrees, acos, asin
 import pygame
 from stl import mesh
+import numpy as np
 
 def sign(x):
     if x < 0:
         return -1
     return 1
 
-class Vector:
-    def __init__(self, x, y, z):
-        self.x = x
-        self.y = y
-        self.z = z
+def get_vector_length(vector):
+    return sqrt(vector[0] ** 2 + vector[1] ** 2 + vector[2] ** 2)
 
-    '''def scale(self, k):
-        self.x *= k
-        self.y *= k
-        self.z *= k'''
+'''class Vector:
+    def __init__(self, x, y, z):
+        self[0] = x
+        self[1] = y
+        self[2] = z
+
+    # def scale(self, k):
+    #     self[0] *= k
+    #     self[1] *= k
+    #     self[2] *= k
 
     def __mul__(self, k: Union[int, float]):
-        return Vector(self.x * k, self.y * k, self.z * k)
+        return np.array([self[0] * k, self[1] * k, self[2] * k)
     
     def length(self):
-        return sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
+        return sqrt(self[0] ** 2 + self[1] ** 2 + self[2] ** 2)'''
 
 
-class Point:
+'''class Point:
     def __init__(self, x, y, z):
-        self.x = x
-        self.y = y
-        self.z = z
+        self[0] = x
+        self[1] = y
+        self[2] = z
     
     def move(self, vector):
-        self.x += vector.x
-        self.y += vector.y
-        self.z += vector.z
+        self[0] += vector[0]
+        self[1] += vector[1]
+        self[2] += vector[2]
 
     def __add__(self, vector: Vector):
-        return Point(self.x + vector.x, self.y + vector.y, self.z + vector.z)
+        return np.array([self[0] + vector[0], self[1] + vector[1], self[2] + vector[2])
     
     def __sub__(self, vector: Vector):
-        return self + (vector * -1)
+        return self + (vector * -1)'''
     
 '''class Edge:
     def __init__(self, point1: Point, point2: Point):
@@ -50,7 +54,7 @@ class Point:
     
 
 class Camera:
-    def __init__(self, position: Point, angle_y: Union[int, float], angle_z: Union[int, float], screen, height, width):
+    def __init__(self, position: np.ndarray, angle_y: Union[int, float], angle_z: Union[int, float], screen, height, width):
         self.position = position
         self.angle_y = angle_y
         self.angle_z = angle_z
@@ -64,85 +68,83 @@ class Camera:
 
     def translate_points(self, points):
         translated_points = []
-        translation_vector = Vector(self.position.x, self.position.y, self.position.z)
+        translation_vector = np.array([self.position[0], self.position[1], self.position[2]])
         for i in points:
             translated_points.append(i - translation_vector)
         return translated_points
     
-    def rotate_points_y(self, points): #по часовой стрелке - положительный угол
+    def rotate_camera_y(self, points): #по часовой стрелке - положительный угол
         rotated_points = []
         for i in points:
             try:
-                vector = Vector(i.x, i.y, i.z)
-                if atan(vector.z / vector.x) > 0:
-                    if vector.x > 0:
-                        new_angle = degrees(atan(vector.z / vector.x)) - self.angle_y
+                vector = np.array([i[0], i[1], i[2]])
+                length = sqrt(vector[0] ** 2 + vector[2] ** 2)
+                if length != 0:
+                    if vector[0] > 0:
+                        new_angle = degrees(asin(vector[2] / length)) - self.angle_y
                     else:
-                        new_angle = -180 + degrees(atan(vector.z / vector.x)) - self.angle_y
+                        if vector[2] > 0:
+                            new_angle = 180 - degrees(asin(vector[2] / length)) - self.angle_y
+                        else:
+                            new_angle = -180 - degrees(asin(vector[2] / length)) - self.angle_y
                 else:
-                    if vector.x > 0:
-                        new_angle = degrees(atan(vector.z / vector.x)) - self.angle_y
-                    else:
-                        new_angle = 180 + degrees(atan(vector.z / vector.x)) - self.angle_y
-                        #print(90 + -1 * degrees(atan(vector.z / vector.x)) - self.angle_y)
-                new_x = sqrt(vector.x ** 2 + vector.z ** 2) * cos(radians(new_angle))
-                new_z = sqrt(vector.x ** 2 + vector.z ** 2) * sin(radians(new_angle))
-                rotated_points.append(Point(new_x, i.y, new_z))
+                    rotated_points.append(vector)
+                new_x = sqrt(vector[0] ** 2 + vector[2] ** 2) * cos(radians(new_angle))
+                new_z = sqrt(vector[0] ** 2 + vector[2] ** 2) * sin(radians(new_angle))
+                rotated_points.append(np.array([new_x, i[1], new_z]))
             except ZeroDivisionError:
-                vector = Vector(i.x, i.y, i.z)  
-                if vector.z > 0:
+                vector = np.array([i[0], i[1], i[2]])  
+                print('AAAAAAAAA')
+                if vector[2] > 0:
                     new_angle = 90 - self.angle_y
-                    new_x = sqrt(vector.x ** 2 + vector.z ** 2) * cos(radians(new_angle))
-                    new_z = sqrt(vector.x ** 2 + vector.z ** 2) * sin(radians(new_angle))
-                elif vector.z < 0:
+                    new_x = sqrt(vector[0] ** 2 + vector[2] ** 2) * cos(radians(new_angle))
+                    new_z = sqrt(vector[0] ** 2 + vector[2] ** 2) * sin(radians(new_angle))
+                elif vector[2] < 0:
                     new_angle = -90 - self.angle_y
-                    new_x = sqrt(vector.x ** 2 + vector.z ** 2) * cos(radians(new_angle))
-                    new_z = sqrt(vector.x ** 2 + vector.z ** 2) * sin(radians(new_angle))
+                    new_x = sqrt(vector[0] ** 2 + vector[2] ** 2) * cos(radians(new_angle))
+                    new_z = sqrt(vector[0] ** 2 + vector[2] ** 2) * sin(radians(new_angle))
                 else:
                     new_z = 0
                     new_x = 0
-                rotated_points.append(Point(new_x, i.y, new_z))
-            #print(list(map(lambda a: [a.x, a.y, a.z], rotated_points)))
+                rotated_points.append(np.array([new_x, i[1], new_z]))
+            #print(list(map(lambda a: [a[0], a[1], a[2]], rotated_points)))
         return rotated_points
     
-    def rotate_points_z(self, points): #по часовой стрелке - положительный угол
+    def rotate_camera_z(self, points): #по часовой стрелке - положительный угол
         rotated_points = []   
         for i in points:
             try:
-                vector = Vector(i.x, i.y, i.z)
-                if atan(vector.y / vector.x) > 0:
-                    if vector.x > 0:
-                        new_angle = degrees(atan(vector.y / vector.x)) - self.angle_z
+                vector = np.array([i[0], i[1], i[2]])
+                length = sqrt(vector[0] ** 2 + vector[1] ** 2)
+                if length != 0:
+                    if vector[0] > 0:
+                        new_angle = degrees(asin(vector[1] / length)) - self.angle_z
                     else:
-                        new_angle = -180 + degrees(atan(vector.y / vector.x)) - self.angle_z
+                        if vector[1] > 0:
+                            new_angle = 180 - degrees(asin(vector[1] / length)) - self.angle_z
+                        else:
+                            new_angle = -180 - degrees(asin(vector[1] / length)) - self.angle_z
                 else:
-                    if vector.x > 0:
-                        new_angle = degrees(atan(vector.y / vector.x)) - self.angle_z
-                    else:
-                        new_angle = 180 + degrees(atan(vector.y / vector.x)) - self.angle_z
-
-                '''if vector.x > 0:
-                    new_angle = degrees(atan(vector.y / vector.x)) - self.angle_z
-                else:
-                    new_angle = -1 * (180 - degrees(atan(vector.x / vector.y))) - self.angle_z'''
-                new_x = sqrt(vector.x ** 2 + vector.y ** 2) * cos(radians(new_angle))
-                new_y = sqrt(vector.x ** 2 + vector.y ** 2) * sin(radians(new_angle))
-                rotated_points.append(Point(new_x, new_y, i.z))
+                    rotated_points.append(vector)
+                new_x = sqrt(vector[0] ** 2 + vector[1] ** 2) * cos(radians(new_angle))
+                new_y = sqrt(vector[0] ** 2 + vector[1] ** 2) * sin(radians(new_angle))
+                rotated_points.append(np.array([new_x, new_y, i[2]]))
             except ZeroDivisionError:
-                vector = Vector(i.x, i.y, i.z)
-                if vector.y > 0:
+                print('AAAAAAA')
+                vector = np.array([i[0], i[1], i[2]])
+                if vector[1] > 0:
                     new_angle = 90 - self.angle_z
-                    new_x = sqrt(vector.x ** 2 + vector.y ** 2) * cos(radians(new_angle))
-                    new_y = sqrt(vector.x ** 2 + vector.y ** 2) * sin(radians(new_angle))
-                elif vector.y < 0:
+                    new_x = sqrt(vector[0] ** 2 + vector[1] ** 2) * cos(radians(new_angle))
+                    new_y = sqrt(vector[0] ** 2 + vector[1] ** 2) * sin(radians(new_angle))
+                elif vector[1] < 0:
                     new_angle = -90 - self.angle_z
-                    new_x = sqrt(vector.x ** 2 + vector.y ** 2) * cos(radians(new_angle))
-                    new_y = sqrt(vector.x ** 2 + vector.y ** 2) * sin(radians(new_angle))
+                    new_x = sqrt(vector[0] ** 2 + vector[1] ** 2) * cos(radians(new_angle))
+                    new_y = sqrt(vector[0] ** 2 + vector[1] ** 2) * sin(radians(new_angle))
                 else:                
                     new_x = 0
                     new_y = 0
                 
-                rotated_points.append(Point(new_x, new_y, i.z))
+                rotated_points.append(np.array([new_x, new_y, i[2]]))
 
         return rotated_points
 
@@ -150,28 +152,25 @@ class Camera:
     def render_points(self, points):
         return_list = []
         points = self.translate_points(points)
-        points = self.rotate_points_y(points)
-        points = self.rotate_points_z(points)
+        points = self.rotate_camera_y(points)
+        points = self.rotate_camera_z(points)
         for i in points:
-            vector = Vector(i.x, i.y, i.z)
+            vector = np.array([i[0], i[1], i[2]])
             try:
-                new_x = asin(vector.z / sqrt(vector.x ** 2 + vector.z ** 2))
-                new_y = asin(vector.y / sqrt(vector.x ** 2 + vector.y ** 2))
+                new_x = asin(vector[2] / sqrt(vector[0] ** 2 + vector[2] ** 2))
+                new_y = asin(vector[1] / sqrt(vector[0] ** 2 + vector[1] ** 2))
                 return_list.append((new_x, new_y))
-                '''if new_x * (self.width / radians(self.vision)) + self.width // 2 > 500:
-                    print(i.x, i.y, i.z, new_x, new_y, new_x * (self.width / radians(self.vision)) + self.width // 2)'''
-                #print('AAAAAAAAAA', i.x, i.y, i.z, new_x, new_y)
             except ZeroDivisionError:
-                if vector.x ** 2 + vector.y ** 2 == 0:
-                    if vector.z > 0:
+                if vector[0] ** 2 + vector[1] ** 2 == 0:
+                    if vector[2] > 0:
                         new_x = radians(90)
-                    elif vector.z < 0:
+                    elif vector[2] < 0:
                         new_x = radians(-90)
                     new_y = 0
-                elif vector.x ** 2 + vector.z ** 2 == 0:
-                    if vector.y > 0:
+                elif vector[0] ** 2 + vector[2] ** 2 == 0:
+                    if vector[1] > 0:
                         new_y = radians(90)
-                    elif vector.y < 0:
+                    elif vector[1] < 0:
                         new_y = radians(-90)
                     new_x = 0
                 return_list.append((new_x, new_y))
@@ -187,26 +186,26 @@ class Camera:
         return return_list'''
     
     def translate_to_new_basis(self, polygon, intersec_point, v1, v2, o_point):
-        v1_args = {'x': v1.x, 'y': v1.y, 'z': v1.z}
-        v2_args = {'x': v2.x, 'y': v2.y, 'z': v2.z}
-        intersec_point_args = {'x': intersec_point.x, 'y': intersec_point.y, 'z': intersec_point.z}
-        o_args = {'x': o_point.x, 'y': o_point.y, 'z': o_point.z}
+        v1_args = {'x': v1[0], 'y': v1[1], 'z': v1[2]}
+        v2_args = {'x': v2[0], 'y': v2[1], 'z': v2[2]}
+        intersec_point_args = {'x': intersec_point[0], 'y': intersec_point[1], 'z': intersec_point[2]}
+        o_args = {'x': o_point[0], 'y': o_point[1], 'z': o_point[2]}
 
-        if v2.x != 0:
+        if v2[0] != 0:
             c2 = 'x'
-            if v1.y != 0:
+            if v1[1] != 0:
                 c1 = 'y'
             else:
                 c1 = 'z'
-        elif v2.y != 0:
+        elif v2[1] != 0:
             c2 = 'y'
-            if v1.x != 0:
+            if v1[0] != 0:
                 c1 = 'x'                       #может наебнуться
             else:
                 c1 = 'z'
         else:
             c2 = 'z'
-            if v1.x != 0:
+            if v1[0] != 0:
                 c1 = 'x'
             else:
                 c1 = 'y'
@@ -217,33 +216,33 @@ class Camera:
         return x, y
     
     def getDistance(self, polygon):
-        BC = Vector(polygon.points[0].x - polygon.points[1].x, polygon.points[0].y - polygon.points[1].y, polygon.points[0].z - polygon.points[1].z)
-        BA = Vector(polygon.points[2].x - polygon.points[1].x, polygon.points[2].y - polygon.points[1].y, polygon.points[2].z - polygon.points[1].z)
-        CA = Vector(polygon.points[0].x - polygon.points[2].x, polygon.points[0].y - polygon.points[2].y, polygon.points[0].z - polygon.points[2].z)
-        normal = Vector(BA.y * BC.z - BA.z * BC.y, BA.z * BC.x - BA.x * BC.z, BA.x * BC.y - BA.y * BC.x)
-        length = abs(normal.x * self.position.x + normal.y * self.position.y + normal.z * self.position.z - (normal.x * polygon.points[1].x + normal.y * polygon.points[1].y + normal.z * polygon.points[1].z)) / sqrt(normal.x ** 2 + normal.y ** 2 + normal.z ** 2)
-        normal = normal * (length / sqrt(normal.x ** 2 + normal.y ** 2 + normal.z ** 2))
+        BC = np.array([polygon.points[0][0] - polygon.points[1][0], polygon.points[0][1] - polygon.points[1][1], polygon.points[0][2] - polygon.points[1][2]])
+        BA = np.array([polygon.points[2][0] - polygon.points[1][0], polygon.points[2][1] - polygon.points[1][1], polygon.points[2][2] - polygon.points[1][2]])
+        CA = np.array([polygon.points[0][0] - polygon.points[2][0], polygon.points[0][1] - polygon.points[2][1], polygon.points[0][2] - polygon.points[2][2]])
+        normal = np.array([BA[1] * BC[2] - BA[2] * BC[1], BA[2] * BC[0] - BA[0] * BC[2], BA[0] * BC[1] - BA[1] * BC[0]])
+        length = abs(normal[0] * self.position[0] + normal[1] * self.position[1] + normal[2] * self.position[2] - (normal[0] * polygon.points[1][0] + normal[1] * polygon.points[1][1] + normal[2] * polygon.points[1][2])) / sqrt(normal[0] ** 2 + normal[1] ** 2 + normal[2] ** 2)
+        normal = normal * (length / sqrt(normal[0] ** 2 + normal[1] ** 2 + normal[2] ** 2))
         antinormal = normal * -1
 
         
 
         intersec_point = self.position + normal
-        if normal.x * intersec_point.x + normal.y * intersec_point.y + normal.z * intersec_point.z - (normal.x * polygon.points[1].x + normal.y * polygon.points[1].y + normal.z * polygon.points[1].z) != 0:
+        if normal[0] * intersec_point[0] + normal[1] * intersec_point[1] + normal[2] * intersec_point[2] - (normal[0] * polygon.points[1][0] + normal[1] * polygon.points[1][1] + normal[2] * polygon.points[1][2]) != 0:
             intersec_point = self.position + antinormal
         
-        #print(normal.x, normal.y, normal.z)
-        #print(intersec_point.x, intersec_point.y, intersec_point.z)
+        #print(normal[0], normal[1], normal[2])
+        #print(intersec_point[0], intersec_point[1], intersec_point[2])
             
 
         #новая проверка на вхождение точки пересечения в треугольник
-        DA = Vector(intersec_point.x - polygon.points[0].x, intersec_point.y - polygon.points[0].y, intersec_point.z - polygon.points[0].z)
-        DB = Vector(intersec_point.x - polygon.points[1].x, intersec_point.y - polygon.points[1].y, intersec_point.z - polygon.points[1].z)
-        DC = Vector(intersec_point.x - polygon.points[2].x, intersec_point.y - polygon.points[2].y, intersec_point.z - polygon.points[2].z)
+        DA = np.array([intersec_point[0] - polygon.points[0][0], intersec_point[1] - polygon.points[0][1], intersec_point[2] - polygon.points[0][2]])
+        DB = np.array([intersec_point[0] - polygon.points[1][0], intersec_point[1] - polygon.points[1][1], intersec_point[2] - polygon.points[1][2]])
+        DC = np.array([intersec_point[0] - polygon.points[2][0], intersec_point[1] - polygon.points[2][1], intersec_point[2] - polygon.points[2][2]])
 
-        s_ABC = Vector(BA.y * BC.z - BA.z * BC.y, BA.z * BC.x - BA.x * BC.z, BA.x * BC.y - BA.y * BC.x).length() / 2
-        s_ABD = Vector(DA.y * DB.z - DA.z * DB.y, DA.z * DB.x - DA.x * DB.z, DA.x * DB.y - DA.y * DB.x).length() / 2
-        s_BCD = Vector(DB.y * DC.z - DB.z * DC.y, DB.z * DC.x - DB.x * DC.z, DB.x * DC.y - DB.y * DC.x).length() / 2
-        s_DCA = Vector(DA.y * DC.z - DA.z * DC.y, DA.z * DC.x - DA.x * DC.z, DA.x * DC.y - DA.y * DC.x).length() / 2
+        s_ABC = get_vector_length(np.array([BA[1] * BC[2] - BA[2] * BC[1], BA[2] * BC[0] - BA[0] * BC[2], BA[0] * BC[1] - BA[1] * BC[0]])) / 2
+        s_ABD = get_vector_length(np.array([DA[1] * DB[2] - DA[2] * DB[1], DA[2] * DB[0] - DA[0] * DB[2], DA[0] * DB[1] - DA[1] * DB[0]])) / 2
+        s_BCD = get_vector_length(np.array([DB[1] * DC[2] - DB[2] * DC[1], DB[2] * DC[0] - DB[0] * DC[2], DB[0] * DC[1] - DB[1] * DC[0]])) / 2
+        s_DCA = get_vector_length(np.array([DA[1] * DC[2] - DA[2] * DC[1], DA[2] * DC[0] - DA[0] * DC[2], DA[0] * DC[1] - DA[1] * DC[0]])) / 2
 
         in_triangle = True
         if s_ABD + s_BCD + s_DCA > s_ABC:
@@ -259,37 +258,37 @@ class Camera:
         
         if c_BA < 0:
             #print('ba1')
-            dist_BA = DB.length()
+            dist_BA = get_vector_length(DB)
         elif c_BA > 1:
             #print('ba2')
-            dist_BA = DA.length()
+            dist_BA = get_vector_length(DA)
         else:
             #print('ba3')
-            dist_BA = Vector(DA.y * BA.z - DA.z * BA.y, DA.z * BA.x - DA.x * BA.z, DA.x * BA.y - DA.y * BA.x).length() / BA.length()
+            dist_BA = get_vector_length(np.array([DA[1] * BA[2] - DA[2] * BA[1], DA[2] * BA[0] - DA[0] * BA[2], DA[0] * BA[1] - DA[1] * BA[0]])) / get_vector_length(BA)
 
         c_BC = self.get_projection(BC, DB)
         
         if c_BC < 0:
             #print('bc1')
-            dist_BC = DB.length()
+            dist_BC = get_vector_length(DC)
         elif c_BC > 1:
             #print('bc2')
-            dist_BC = DC.length()
+            dist_BC = get_vector_length(DC)
         else:
             #print('bc3')
-            dist_BC = Vector(DB.y * BC.z - DB.z * BC.y, DB.z * BC.x - DB.x * BC.z, DB.x * BC.y - DB.y * BC.x).length() / BC.length()
+            dist_BC = get_vector_length(np.array([DB[1] * BC[2] - DB[2] * BC[1], DB[2] * BC[0] - DB[0] * BC[2], DB[0] * BC[1] - DB[1] * BC[0]])) / get_vector_length(BC)
 
         c_CA = self.get_projection(CA, DC)
         
         if c_CA < 0:
             #print('ca1')
-            dist_CA = DC.length()
+            dist_CA = get_vector_length(DC)
         elif c_CA > 1:
             #print('ca2')
-            dist_CA = DA.length()
+            dist_CA = get_vector_length(DA)
         else:
             #print('ca3')
-            dist_CA = Vector(DC.y * CA.z - DC.z * CA.y, DC.z * CA.x - DC.x * CA.z, DC.x * CA.y - DC.y * CA.x).length() / CA.length()
+            dist_CA = get_vector_length(np.array([DC[1] * CA[2] - DC[2] * CA[1], DC[2] * CA[0] - DC[0] * CA[2], DC[0] * CA[1] - DC[1] * CA[0]])) / get_vector_length(CA)
 
         #print([dist_BA, dist_BC, dist_CA])
         #print(length)
@@ -311,13 +310,13 @@ class Camera:
         return [max(i * polygon.cos_theta, self.background) for i in polygon.color], [pos1, pos2, pos3]
     
     def get_distance_to_point(self, point):
-        return sqrt((point.x - self.position.x) ** 2 + (point.y - self.position.y) ** 2 + (point.z - self.position.z) ** 2 )
+        return sqrt((point[0] - self.position[0]) ** 2 + (point[1] - self.position[1]) ** 2 + (point[2] - self.position[2]) ** 2 )
     
     def get_projection(self, v1, v2):
-        return (v1.x * v2.x + v1.y * v2.y + v1.z * v2.z) / v1.length()
+        return (v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]) / get_vector_length(v1)
     
     def render_mesh(self, mesh):
-        for i in sorted(filter(lambda i: self.get_projection(i.normal, Vector(self.position.x - i.center.x, self.position.y - i.center.y, self.position.z - i.center.z)) > 0, mesh.polygons), key=lambda x: (self.getDistance(x), self.get_distance_to_point(x.center)), reverse=True):
+        for i in sorted(filter(lambda i: self.get_projection(i.normal, np.array([self.position[0] - i.center[0], self.position[1] - i.center[1], self.position[2] - i.center[2]])) > 0, mesh.polygons), key=lambda x: (self.getDistance(x), self.get_distance_to_point(x.center)), reverse=True):
             #pygame.draw.polygon(self.screen, *self.render_polygon(i))
             pygame.draw.polygon(self.screen, *self.render_polygon(i))
 
@@ -329,14 +328,14 @@ class Polygon:
         self.update()
 
     def update(self):
-        midpoint = self.points[1] + Vector(self.points[2].x - self.points[1].x, self.points[2].y - self.points[1].y, self.points[2].z - self.points[1].z) * (1 / 2)
-        self.center = self.points[0] + Vector(midpoint.x - self.points[0].x, midpoint.y - self.points[0].y, midpoint.z - self.points[0].z) * (2 / 3)
+        midpoint = self.points[1] + np.array([self.points[2][0] - self.points[1][0], self.points[2][1] - self.points[1][1], self.points[2][2] - self.points[1][2]]) * (1 / 2)
+        self.center = self.points[0] + np.array([midpoint[0] - self.points[0][0], midpoint[1] - self.points[0][1], midpoint[2] - self.points[0][2]]) * (2 / 3)
 
-        BC = Vector(self.points[0].x - self.points[1].x, self.points[0].y - self.points[1].y, self.points[0].z - self.points[1].z)
-        BA = Vector(self.points[2].x - self.points[1].x, self.points[2].y - self.points[1].y, self.points[2].z - self.points[1].z)
-        self.normal = Vector(BA.y * BC.z - BA.z * BC.y, BA.z * BC.x - BA.x * BC.z, BA.x * BC.y - BA.y * BC.x)
-        pointing_vector = Vector(self.light_source.x - self.center.x, self.light_source.y - self.center.y, self.light_source.z - self.center.z)
-        self.cos_theta = (pointing_vector.x * self.normal.x + pointing_vector.y * self.normal.y + pointing_vector.z * self.normal.z) / (pointing_vector.length() * self.normal.length())
+        BC = np.array([self.points[0][0] - self.points[1][0], self.points[0][1] - self.points[1][1], self.points[0][2] - self.points[1][2]])
+        BA = np.array([self.points[2][0] - self.points[1][0], self.points[2][1] - self.points[1][1], self.points[2][2] - self.points[1][2]])
+        self.normal = np.array([BA[1] * BC[2] - BA[2] * BC[1], BA[2] * BC[0] - BA[0] * BC[2], BA[0] * BC[1] - BA[1] * BC[0]])
+        pointing_vector = np.array([self.light_source[0] - self.center[0], self.light_source[1] - self.center[1], self.light_source[2] - self.center[2]])
+        self.cos_theta = (pointing_vector[0] * self.normal[0] + pointing_vector[1] * self.normal[1] + pointing_vector[2] * self.normal[2]) / (get_vector_length(pointing_vector) * get_vector_length(self.normal))
 
         
 class Mesh():
@@ -348,9 +347,9 @@ class Mesh():
         m = mesh.Mesh.from_file(filepath)
         polygons = []
         for i in range(len(m.x)):
-            p0 = Point(m.x[i][0], m.z[i][0], m.y[i][0])
-            p1 = Point(m.x[i][1], m.z[i][1], m.y[i][1])
-            p2 = Point(m.x[i][2], m.z[i][2], m.y[i][2])
+            p0 = np.array([m.x[i][0], m.z[i][0], m.y[i][0]])
+            p1 = np.array([m.x[i][1], m.z[i][1], m.y[i][1]])
+            p2 = np.array([m.x[i][2], m.z[i][2], m.y[i][2]])
             polygon = Polygon([p0, p2, p1], color, lightsource)
             polygons.append(polygon)
         
@@ -365,15 +364,15 @@ class Mesh():
         for polygon in self.polygons:
             new_points = []
             for point in polygon.points:
-                vector = Vector(point.x - center.x, point.y - center.y, point.z - center.z)
-                length = sqrt(vector.x ** 2 + vector.z ** 2)
+                vector = np.array([point[0] - center[0], point[1] - center[1], point[2] - center[2]])
+                length = sqrt(vector[0] ** 2 + vector[2] ** 2)
                 if length != 0:
-                    if vector.z > 0:
-                        old_angle = degrees(acos(vector.x / length))
+                    if vector[2] > 0:
+                        old_angle = degrees(acos(vector[0] / length))
                     else:
-                        old_angle = -degrees(acos(vector.x / length))
+                        old_angle = -degrees(acos(vector[0] / length))
                     new_angle = old_angle + angle
-                    new_point = Point(center.x + length * cos(radians(new_angle)), point.y, center.z + length * sin(radians(new_angle)))
+                    new_point = np.array([center[0] + length * cos(radians(new_angle)), point[1], center[2] + length * sin(radians(new_angle))])
                     new_points.append(new_point)
                 else:
                     new_points.append(point)
@@ -384,15 +383,15 @@ class Mesh():
         for polygon in self.polygons:
             new_points = []
             for point in polygon.points:
-                vector = Vector(point.x - center.x, point.y - center.y, point.z - center.z)
-                length = sqrt(vector.y ** 2 + vector.x ** 2)
+                vector = np.array([point[0] - center[0], point[1] - center[1], point[2] - center[2]])
+                length = sqrt(vector[1] ** 2 + vector[0] ** 2)
                 if length != 0:
-                    if vector.x > 0:
-                        old_angle = degrees(acos(vector.y / length))
+                    if vector[0] > 0:
+                        old_angle = degrees(acos(vector[1] / length))
                     else:
-                        old_angle = -degrees(acos(vector.y / length))
+                        old_angle = -degrees(acos(vector[1] / length))
                     new_angle = old_angle + angle
-                    new_point = Point(center.x + length * sin(radians(new_angle)), center.y + length * cos(radians(new_angle)), point.z)
+                    new_point = np.array([center[0] + length * sin(radians(new_angle)), center[1] + length * cos(radians(new_angle)), point[2]])
                     new_points.append(new_point)
                 else:
                     new_points.append(point)
@@ -403,22 +402,22 @@ class Mesh():
         for polygon in self.polygons:
             new_points = []
             for point in polygon.points:
-                vector = Vector(point.x - center.x, point.y - center.y, point.z - center.z)
-                length = sqrt(vector.y ** 2 + vector.z ** 2)
+                vector = np.array([point[0] - center[0], point[1] - center[1], point[2] - center[2]])
+                length = sqrt(vector[1] ** 2 + vector[2] ** 2)
                 if length != 0:
-                    if vector.z > 0:
-                        old_angle = degrees(acos(vector.y / length))
+                    if vector[2] > 0:
+                        old_angle = degrees(acos(vector[1] / length))
                     else:
-                        old_angle = -degrees(acos(vector.y / length))
+                        old_angle = -degrees(acos(vector[1] / length))
                     new_angle = old_angle + angle
-                    new_point = Point(point.x, center.y + length * cos(radians(new_angle)), center.z + length * sin(radians(new_angle)))
+                    new_point = np.array([point[0], center[1] + length * cos(radians(new_angle)), center[2] + length * sin(radians(new_angle))])
                     new_points.append(new_point)
                 else:
                     new_points.append(point)
             polygon.points = new_points
             polygon.update()
 
-class LightSource(Point):
+'''class LightSource():
     def __init__(self, x, y, z):
-        super().__init__(x, y, z)
+        super().__init__(x, y, z)'''
     
