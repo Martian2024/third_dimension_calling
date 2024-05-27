@@ -1,6 +1,6 @@
 import pygame
-from main import Camera, Polygon, Mesh
-from math import radians
+from main import Camera, Polygon, Mesh, rotate_vector, get_vector_length
+from math import radians, degrees, acos
 from stl import mesh
 import numpy as np
 
@@ -16,20 +16,20 @@ TRESHOLD = 5
 pygame.init()
 #pygame.mixer.init()  # для звука
 screen = pygame.display.set_mode((500, 500))
-camera = Camera(np.array([0.0, 0.0, 0.0]), 0, 0, screen, 500, 500)
+camera = Camera(np.array([0.0, 0.0, 5.0]), -90, 0, screen, 500, 500)
 pygame.display.set_caption("My Game")
 clock = pygame.time.Clock()
 
 
-A = np.array([2.0, -1.0, 1.0])
-B = np.array([2.0, 1.0, 1.0])
-C = np.array([2.0, 1.0, -1.0])
-D = np.array([2.0, -1.0, -1.0])
+A = np.array([-2.0, -1.0, 1.0])
+B = np.array([-2.0, 1.0, 1.0])
+C = np.array([-2.0, 1.0, -1.0])
+D = np.array([-2.0, -1.0, -1.0])
 
-A1 = np.array([4.0, -1.0, 1.0])
-B1 = np.array([4.0, 1.0, 1.0])
-C1 = np.array([4.0, 1.0, -1.0])
-D1 = np.array([4.0, -1.0, -1.0])
+A1 = np.array([2.0, -1.0, 1.0])
+B1 = np.array([2.0, 1.0, 1.0])
+C1 = np.array([2.0, 1.0, -1.0])
+D1 = np.array([2.0, -1.0, -1.0])
 
 A2 = np.array([1.0, -1.0, 3.0])
 B2 = np.array([1.0, 1.0, 3.0])
@@ -47,7 +47,7 @@ p1 = np.array([1.0, -1.0, 1.0])
 p2 = np.array([2.0, 0.0, 2.0])
 p3 = np.array([1.0, 1.0, 1.0])
 
-LIGHTSOURCE = np.array([30, 0, 0])
+LIGHTSOURCE = np.array([-30, 0, 0])
 
 POLYGONS = [Polygon([A, B, C], BLUE, LIGHTSOURCE), Polygon([A, C, D], BLUE, LIGHTSOURCE), #называем вершины против часовой стрелки             Polygon([C, C1, D1], WHITE, LIGHTSOURCE), Polygon([C, D1, D], WHITE, LIGHTSOURCE),
             Polygon([A1, B, A], GREEN, LIGHTSOURCE), Polygon([A1, B1, B], GREEN, LIGHTSOURCE),
@@ -62,8 +62,11 @@ POLYGONS = [Polygon([A, B, C], BLUE, LIGHTSOURCE), Polygon([A, C, D], BLUE, LIGH
             Polygon([D3, A3, A2], WHITE, LIGHTSOURCE), Polygon([D2, D3, A2], WHITE, LIGHTSOURCE),
             Polygon([C3, B3, A3], WHITE, LIGHTSOURCE), Polygon([D3, C3, A3], WHITE, LIGHTSOURCE)]
 
-MESHES = [Mesh.from_file('Chest_01.stl', WHITE, LIGHTSOURCE)]
+#MESHES = [Mesh.from_file('Chest_01.stl', WHITE, LIGHTSOURCE)]
 #MESHES = [Mesh(POLYGONS[:12])]
+#ship = Mesh.from_file('cube3.stl', WHITE, LIGHTSOURCE)
+MESHES = [Mesh.from_file('ship.stl', WHITE, LIGHTSOURCE)]
+#MESHES[0].velocity[2] = 0.01
 #MESHES = [Mesh([Polygon([A, B, C], BLUE, LIGHTSOURCE)])]
 #print(MESHES[0].polygons[0].points[0].x)
 
@@ -98,6 +101,18 @@ while running:
             camera.position[1] += 1
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_e:
             camera.position[1] -= 1
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_u:
+            MESHES[0].rotate_around_axis(MESHES[0].axes[2], 3)
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_j:
+            MESHES[0].rotate_around_axis(MESHES[0].axes[2], -3)
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_k:
+            MESHES[0].rotate_around_axis(MESHES[0].axes[1], 3)
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_h:
+            MESHES[0].rotate_around_axis(MESHES[0].axes[1], -3)
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_y:
+            MESHES[0].rotate_around_axis(MESHES[0].axes[0], -3)
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_i:
+            MESHES[0].rotate_around_axis(MESHES[0].axes[0], 3)
 
     #render_edges([AB, BC, CD, DA, AA1, BB1, CC1, DD1, A1B1, B1C1, C1D1, D1A1])
 
@@ -112,7 +127,12 @@ while running:
     #         if camera.get_projection(i.normal, Vector(camera.position.x - i.center.x, camera.position.y - i.center.y, camera.position.z - i.center.z)) > 0: #AAAAAAAA
     #             pygame.draw.polygon(camera.screen, *camera.render_polygon(i))
     for i in MESHES:
-         camera.render_mesh(i)
+        i.update()
+        for j in MESHES:
+            if i != j:
+                pass
+                #print(i.check_collision(j))
+        camera.render_mesh(i)
     pygame.display.flip()
     #print(1)
     
