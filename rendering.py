@@ -11,12 +11,14 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
-TRESHOLD = 5
+HEIGHT = 900
+WIDTH = 1200
+
 
 pygame.init()
 #pygame.mixer.init()  # для звука
-screen = pygame.display.set_mode((500, 500))
-camera = Camera(np.array([0.0, 0.0, 5.0]), -90, 0, screen, 500, 500)
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+camera = Camera(np.array([-5.0, 0.0, 0.0]), 0, 0, 0, screen, WIDTH, HEIGHT)
 pygame.display.set_caption("My Game")
 clock = pygame.time.Clock()
 
@@ -65,8 +67,9 @@ POLYGONS = [Polygon([A, B, C], BLUE, LIGHTSOURCE), Polygon([A, C, D], BLUE, LIGH
 #MESHES = [Mesh.from_file('Chest_01.stl', WHITE, LIGHTSOURCE)]
 #MESHES = [Mesh(POLYGONS[:12])]
 #ship = Mesh.from_file('cube3.stl', WHITE, LIGHTSOURCE)
+#MESHES = [Mesh.from_file('player_ship.stl', WHITE, LIGHTSOURCE)]
 MESHES = [Mesh.from_file('ship.stl', WHITE, LIGHTSOURCE)]
-#MESHES[0].velocity[2] = 0.01
+MESHES[0].rotation_v[2] = 3
 #MESHES = [Mesh([Polygon([A, B, C], BLUE, LIGHTSOURCE)])]
 #print(MESHES[0].polygons[0].points[0].x)
 
@@ -86,9 +89,9 @@ while running:
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
             camera.angle_y -= 3
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
-            camera.angle_z += 3
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN:
             camera.angle_z -= 3
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN:
+            camera.angle_z += 3
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_w:
             camera.position[0] += 1
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_s:
@@ -102,17 +105,17 @@ while running:
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_e:
             camera.position[1] -= 1
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_u:
-            MESHES[0].rotate_around_axis(MESHES[0].axes[2], 3)
+            MESHES[0].rotate_around_axis(MESHES[0].axes[2], 3, MESHES[0].center)
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_j:
-            MESHES[0].rotate_around_axis(MESHES[0].axes[2], -3)
+            MESHES[0].rotate_around_axis(MESHES[0].axes[2], -3, MESHES[0].center)
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_k:
-            MESHES[0].rotate_around_axis(MESHES[0].axes[1], 3)
+            MESHES[0].rotate_around_axis(MESHES[0].axes[1], 3, MESHES[0].center)
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_h:
-            MESHES[0].rotate_around_axis(MESHES[0].axes[1], -3)
+            MESHES[0].rotate_around_axis(MESHES[0].axes[1], -3, MESHES[0].center)
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_y:
-            MESHES[0].rotate_around_axis(MESHES[0].axes[0], -3)
+            MESHES[0].rotate_around_axis(MESHES[0].axes[0], -3, MESHES[0].center)
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_i:
-            MESHES[0].rotate_around_axis(MESHES[0].axes[0], 3)
+            MESHES[0].rotate_around_axis(MESHES[0].axes[0], 3, MESHES[0].center)
 
     #render_edges([AB, BC, CD, DA, AA1, BB1, CC1, DD1, A1B1, B1C1, C1D1, D1A1])
 
@@ -121,7 +124,7 @@ while running:
     #MESHES[0].rotate_y(1, np.array([3, 0, 0]))
     #MESHES[0].rotate_z(1, np.array([3, 0, 0))
     pos = camera.render_points([LIGHTSOURCE])[0]
-    pos = (pos[0] * (camera.width / radians(camera.vision)) + camera.width // 2, -1 * pos[1] * (camera.height / radians(camera.vision)) + camera.height // 2)
+    pos = (pos[0] * (camera.width / radians(camera.vision_x)) + camera.width // 2, -1 * pos[1] * (camera.height / radians(camera.vision_y)) + camera.height // 2)
     pygame.draw.circle(screen, WHITE, pos, 5)
     # for i in sorted(POLYGONS, key=lambda x: (camera.getDistance(x), camera.get_distance_to_point(x.center)), reverse=True):
     #         if camera.get_projection(i.normal, Vector(camera.position.x - i.center.x, camera.position.y - i.center.y, camera.position.z - i.center.z)) > 0: #AAAAAAAA

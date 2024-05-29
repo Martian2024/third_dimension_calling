@@ -29,7 +29,6 @@ def rotate_vector(vector, axis, angle):
         b = np.array([-r[0] * k_r, -r[1] * k_r, -r[2] * k_r])
         v = np.array([a[0] + b[0], a[1] + b[1], a[2] + b[2]]) #вектор перемещения
         vector1 = np.array([vector[0] + v[0], vector[1] + v[1], vector[2] + v[2],])
-        print(v)
         return v
     return np.array([0, 0, 0])
 
@@ -75,112 +74,42 @@ def rotate_vector(vector, axis, angle):
     
 
 class Camera:
-    def __init__(self, position: np.ndarray, angle_y: Union[int, float], angle_z: Union[int, float], screen, height, width):
+    def __init__(self, position: np.ndarray, angle_x: Union[int, float], angle_y: Union[int, float], angle_z: Union[int, float], screen, width, height):
         self.position = position
+        self.angle_x = angle_x
         self.angle_y = angle_y
         self.angle_z = angle_z
-        self.vision = 60
-        self.plane_side = 2 * tan(radians(self.vision))
+        self.vision_x = 55
+        self.vision_y = 60
         self.width = width  
         self.height = height 
         self.fps = 30
         self.background = 30
         self.screen = screen
+        self.axes = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+
 
     def translate_points(self, points):
         translated_points = []
-        translation_vector = np.array([self.position[0], self.position[1], self.position[2]])
+        translation_vector = self.position
         for i in points:
             translated_points.append(i - translation_vector)
         return translated_points
-    
-    def rotate_camera_y(self, points): #по часовой стрелке - положительный угол
-        rotated_points = []
-        for i in points:
-            try:
-                vector = np.array([i[0], i[1], i[2]])
-                length = sqrt(vector[0] ** 2 + vector[2] ** 2)
-                if length != 0:
-                    if vector[0] > 0:
-                        new_angle = degrees(asin(vector[2] / length)) - self.angle_y
-                    else:
-                        if vector[2] > 0:
-                            new_angle = 180 - degrees(asin(vector[2] / length)) - self.angle_y
-                        else:
-                            new_angle = -180 - degrees(asin(vector[2] / length)) - self.angle_y
-                else:
-                    rotated_points.append(vector)
-                new_x = sqrt(vector[0] ** 2 + vector[2] ** 2) * cos(radians(new_angle))
-                new_z = sqrt(vector[0] ** 2 + vector[2] ** 2) * sin(radians(new_angle))
-                rotated_points.append(np.array([new_x, i[1], new_z]))
-            except ZeroDivisionError:
-                vector = np.array([i[0], i[1], i[2]])  
-                print('AAAAAAAAA')
-                if vector[2] > 0:
-                    new_angle = 90 - self.angle_y
-                    new_x = sqrt(vector[0] ** 2 + vector[2] ** 2) * cos(radians(new_angle))
-                    new_z = sqrt(vector[0] ** 2 + vector[2] ** 2) * sin(radians(new_angle))
-                elif vector[2] < 0:
-                    new_angle = -90 - self.angle_y
-                    new_x = sqrt(vector[0] ** 2 + vector[2] ** 2) * cos(radians(new_angle))
-                    new_z = sqrt(vector[0] ** 2 + vector[2] ** 2) * sin(radians(new_angle))
-                else:
-                    new_z = 0
-                    new_x = 0
-                rotated_points.append(np.array([new_x, i[1], new_z]))
-            #print(list(map(lambda a: [a[0], a[1], a[2]], rotated_points)))
-        return rotated_points
-    
-    def rotate_camera_z(self, points): #по часовой стрелке - положительный угол
-        rotated_points = []   
-        for i in points:
-            try:
-                vector = np.array([i[0], i[1], i[2]])
-                length = sqrt(vector[0] ** 2 + vector[1] ** 2)
-                if length != 0:
-                    if vector[0] > 0:
-                        new_angle = degrees(asin(vector[1] / length)) - self.angle_z
-                    else:
-                        if vector[1] > 0:
-                            new_angle = 180 - degrees(asin(vector[1] / length)) - self.angle_z
-                        else:
-                            new_angle = -180 - degrees(asin(vector[1] / length)) - self.angle_z
-                else:
-                    rotated_points.append(vector)
-                new_x = sqrt(vector[0] ** 2 + vector[1] ** 2) * cos(radians(new_angle))
-                new_y = sqrt(vector[0] ** 2 + vector[1] ** 2) * sin(radians(new_angle))
-                rotated_points.append(np.array([new_x, new_y, i[2]]))
-            except ZeroDivisionError:
-                print('AAAAAAA')
-                vector = np.array([i[0], i[1], i[2]])
-                if vector[1] > 0:
-                    new_angle = 90 - self.angle_z
-                    new_x = sqrt(vector[0] ** 2 + vector[1] ** 2) * cos(radians(new_angle))
-                    new_y = sqrt(vector[0] ** 2 + vector[1] ** 2) * sin(radians(new_angle))
-                elif vector[1] < 0:
-                    new_angle = -90 - self.angle_z
-                    new_x = sqrt(vector[0] ** 2 + vector[1] ** 2) * cos(radians(new_angle))
-                    new_y = sqrt(vector[0] ** 2 + vector[1] ** 2) * sin(radians(new_angle))
-                else:                
-                    new_x = 0
-                    new_y = 0
-                
-                rotated_points.append(np.array([new_x, new_y, i[2]]))
-
-        return rotated_points
-
 
     def render_points(self, points):
         return_list = []
         points = self.translate_points(points)
-        points = self.rotate_camera_y(points)
-        points = self.rotate_camera_z(points)
-        for i in points:
-            vector = np.array([i[0], i[1], i[2]])
+        points = self.rotate_around_axis(-self.angle_y, self.axes[1], points)
+        points = self.rotate_around_axis(-self.angle_z, self.axes[2], points)
+        points = self.rotate_around_axis(-self.angle_x, self.axes[0], points)
+        for vector in points:
             try:
-                new_x = asin(vector[2] / sqrt(vector[0] ** 2 + vector[2] ** 2))
-                new_y = asin(vector[1] / sqrt(vector[0] ** 2 + vector[1] ** 2))
-                return_list.append((new_x, new_y))
+                if vector[0] >= 0:
+                    new_x = asin(vector[2] / sqrt(vector[0] ** 2 + vector[2] ** 2))
+                    new_y = asin(vector[1] / sqrt(vector[0] ** 2 + vector[1] ** 2))
+                else:
+                    new_x = radians(180) - asin(vector[2] / sqrt(vector[0] ** 2 + vector[2] ** 2))
+                    new_y = radians(180) - asin(vector[1] / sqrt(vector[0] ** 2 + vector[1] ** 2))
             except ZeroDivisionError:
                 if vector[0] ** 2 + vector[1] ** 2 == 0:
                     if vector[2] > 0:
@@ -194,11 +123,26 @@ class Camera:
                     elif vector[1] < 0:
                         new_y = radians(-90)
                     new_x = 0
-                return_list.append((new_x, new_y))
+            return_list.append((new_x * (self.width / radians(self.vision_x)) + self.width // 2, -1 * new_y * (self.height / radians(self.vision_y)) + self.height // 2))
 
         #print(return_list)
 
         return return_list
+    
+    def rotate_around_axis(self, angle, axis, points):
+        rotated_points = []   
+        for i in points:
+            v = rotate_vector(i, axis, angle)
+            rotated_points.append(np.array([i[0] + v[0], i[1] + v[1], i[2] + v[2]]))
+
+        return rotated_points
+    
+    def change_orientation(self, axis, angle):
+        new_axes = []
+        for i in range(3):
+            v = rotate_vector(self.axes[i], axis, angle)
+            new_axes.append([self.axes[i][0] + v[0], self.axes[i][1] + v[1], self.axes[i][2] + v[2]])
+        self.axes = np.array(new_axes)
     
     '''def render_edges(self, edges):
         return_list = []
@@ -321,14 +265,7 @@ class Camera:
     def render_polygon(self, polygon):
         polygon.update()
         points = self.render_points(polygon.points)
-
-        
-        
-        pos1 = (points[0][0] * (self.width / radians(self.vision)) + self.width // 2, -1 * points[0][1] * (self.height / radians(self.vision)) + self.height // 2)
-        pos2 = (points[1][0] * (self.width / radians(self.vision)) + self.width // 2, -1 * points[1][1] * (self.height / radians(self.vision)) + self.height // 2)
-        pos3 = (points[2][0] * (self.width / radians(self.vision)) + self.width // 2, -1 * points[2][1] * (self.height / radians(self.vision)) + self.height // 2)
-        #print([pos1, pos2, pos3])
-        return [max(i * polygon.cos_theta, self.background) for i in polygon.color], [pos1, pos2, pos3]
+        return [max(i * polygon.cos_theta, self.background) for i in polygon.color], points
     
     def get_distance_to_point(self, point):
         return sqrt((point[0] - self.position[0]) ** 2 + (point[1] - self.position[1]) ** 2 + (point[2] - self.position[2]) ** 2 )
@@ -365,7 +302,6 @@ class Mesh():
         self.center = center
         self.acceleration = np.array([0.0, 0.0, 0.0])
         self.velocity = np.array([0.0, 0.0, 0.0])
-        self.angles = np.array([0.0, 0.0, 0.0]) #углы Эйлера. x соответствует глобальному y, y - высоте над горизонтом в астрономии, z - вращение тела вокруг его продольной оси
         self.rotation_v = np.array([0.0, 0.0, 0.0])
         self.rotation_a = np.array([0.0, 0.0, 0.0])
         self.rotational_mass = 1
@@ -392,96 +328,11 @@ class Mesh():
             polygon.points = list(map(lambda point:  point + self.velocity, polygon.points))
             polygon.update()
 
-    # def rotate_y(self, angle, center):
-    #     for polygon in self.polygons:
-    #         new_points = []
-    #         for point in polygon.points:
-    #             vector = np.array([point[0] - center[0], point[1] - center[1], point[2] - center[2]])
-    #             length = sqrt(vector[0] ** 2 + vector[2] ** 2)
-    #             if length != 0:
-    #                 if vector[2] > 0:
-    #                     old_angle = degrees(acos(vector[0] / length))
-    #                 else:
-    #                     old_angle = -degrees(acos(vector[0] / length))
-    #                 new_angle = old_angle + angle
-    #                 new_point = np.array([center[0] + length * cos(radians(new_angle)), point[1], center[2] + length * sin(radians(new_angle))])
-    #                 new_points.append(new_point)
-    #             else:
-    #                 new_points.append(point)
-    #         polygon.points = new_points
-    #         polygon.update()
-    #     #self.angles[1] += angle
-        
-    # def rotate_z(self, angle, center):
-    #     for polygon in self.polygons:
-    #         new_points = []
-    #         for point in polygon.points:
-    #             vector = np.array([point[0] - center[0], point[1] - center[1], point[2] - center[2]])
-    #             length = sqrt(vector[1] ** 2 + vector[0] ** 2)
-    #             if length != 0:
-    #                 if vector[0] > 0:
-    #                     old_angle = degrees(acos(vector[1] / length))
-    #                 else:
-    #                     old_angle = -degrees(acos(vector[1] / length))
-    #                 new_angle = old_angle + angle
-    #                 new_point = np.array([center[0] + length * sin(radians(new_angle)), center[1] + length * cos(radians(new_angle)), point[2]])
-    #                 new_points.append(new_point)
-    #             else:
-    #                 new_points.append(point)
-    #         polygon.points = new_points
-    #         polygon.update()
-    #     #self.angles[2] += angle
-
-    # def rotate_x(self, angle, center):
-    #     for polygon in self.polygons:
-    #         new_points = []
-    #         for point in polygon.points:
-    #             vector = np.array([point[0] - center[0], point[1] - center[1], point[2] - center[2]])
-    #             length = sqrt(vector[1] ** 2 + vector[2] ** 2)
-    #             if length != 0:
-    #                 if vector[2] > 0:
-    #                     old_angle = degrees(acos(vector[1] / length))
-    #                 else:
-    #                     old_angle = -degrees(acos(vector[1] / length))
-    #                 new_angle = old_angle + angle
-    #                 new_point = np.array([point[0], center[1] + length * cos(radians(new_angle)), center[2] + length * sin(radians(new_angle))])
-    #                 new_points.append(new_point)
-    #             else:
-    #                 new_points.append(point)
-    #         polygon.points = new_points
-    #         polygon.update()
-    #     #self.angles[0] += angle
-
-    # def rotate_local_y(self, angle, center):
-    #     self.rotate_y(angle * cos(radians(self.angles[0])), center)
-    #     self.rotate_z(angle * sin(radians(self.angles[0])), center)
-    #     self.rotate_local_x(degrees(acos(sin(radians(90 - self.angles[0])) * sin(radians(90)) * cos(radians(self.angles[2])) - cos(radians(90 - self.angles[0])) * cos(radians(90)))) / 90 * angle, center)
-    #     #self.angles[0] -= degrees(acos(sin(radians(90 - self.angles[0])) * sin(radians(90)) * cos(radians(self.angles[2])) - cos(radians(90 - self.angles[0])) * cos(radians(90)))) / 90 * angle
-
-    # def rotate_local_z(self, angle, flag):
-    #     self.rotate_euler_y(angle, 90, flag)
-
-    # def rotate_local_x(self, angle, center):
-    #     self.angles[0] += angle
-    #     self.rotate_x(angle * cos(radians(self.angles[2])), center)
-    #     self.rotate_y(angle * sin(radians(self.angles[2])), center)
-
-    # def rotate_euler_y(self, angle, angle_A, flag):
-    #     a = asin(sin(radians(angle)) * sin(radians(angle_A)))
-    #     b = acos(cos(radians(angle)) / cos(a))
-    #     dy_global = degrees(b) + (90 - self.angles[0]) * (degrees(a) / 90)
-    #     dx_global = degrees(a)
-    #     print((90 - self.angles[0]), dx_global)
-        
-    #     self.rotate_y(dy_global, self.center)
-        
-    #     self.rotate_x(90, self.center)
-
-    def rotate_around_axis(self, axis, angle):
+    def rotate_around_axis(self, axis, angle, center):
         for polygon in self.polygons:
             new_points = []
             for point in polygon.points:
-                radius = np.array([point[0] - self.center[0], point[1] - self.center[1], point[2] - self.center[2]]) #радиус-вектор точки
+                radius = np.array([point[0] - center[0], point[1] - center[1], point[2] - center[2]]) #радиус-вектор точки
                 v = rotate_vector(radius, axis, angle)
                 new_points.append(np.array([point[0] + v[0], point[1] + v[1], point[2] + v[2]]))
             polygon.points = new_points
@@ -497,9 +348,9 @@ class Mesh():
         self.velocity = np.array([self.velocity[i] + self.acceleration[i]  for i in range(3)])
         self.move()
         self.rotation_v = np.array([self.rotation_v[i] + self.rotation_a[i] for i in range(3)])
-        # self.rotate_around_axis(np.array([1, 0, 0]), self.rotation_v[0])
-        # self.rotate_around_axis(np.array([0, 1, 0]), self.rotation_v[1])
-        # self.rotate_around_axis(np.array([0, 0, 1]), self.rotation_v[2])
+        self.rotate_around_axis(self.axes[0], self.rotation_v[0], self.center)
+        self.rotate_around_axis(self.axes[1], self.rotation_v[1], self.center)
+        self.rotate_around_axis(self.axes[2], self.rotation_v[2], self.center)
 
     '''def check_collision(self, other_mesh):
         for other_polygon in filter(lambda i: get_projection(i.normal, np.array([self.center[0] - i.center[0], self.center[1] - i.center[1], self.center[2] - i.center[2]])), other_mesh.polygons):
