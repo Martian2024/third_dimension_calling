@@ -99,9 +99,12 @@ class Camera:
     def render_points(self, points):
         return_list = []
         points = self.translate_points(points)
-        points = self.rotate_around_axis(-self.angle_y, self.axes[1], points)
-        points = self.rotate_around_axis(-self.angle_z, self.axes[2], points)
-        points = self.rotate_around_axis(-self.angle_x, self.axes[0], points)
+        points = self.rotate_around_axis(-self.angle_y, np.array([0, 1, 0]), points)
+        new_z_axis = np.array([0, 0, 1]) + rotate_vector(np.array([0, 0, 1]), np.array([0, 1, 0]), self.angle_y)
+        points = self.rotate_around_axis(-self.angle_z, -new_z_axis, points)
+        new_x_axis = np.array([1, 0, 0]) + rotate_vector(np.array([0, 0, 1]), np.array([0, 1, 0]), self.angle_y)
+        new_x_axis += rotate_vector(new_x_axis, new_z_axis, self.angle_z)
+        #points = self.rotate_around_axis(-self.angle_x, new_x_axis, points)
         for vector in points:
             try:
                 if vector[0] >= 0:
@@ -133,16 +136,16 @@ class Camera:
         rotated_points = []   
         for i in points:
             v = rotate_vector(i, axis, angle)
-            rotated_points.append(np.array([i[0] + v[0], i[1] + v[1], i[2] + v[2]]))
+            rotated_points.append(i + v)
 
         return rotated_points
     
-    def change_orientation(self, axis, angle):
-        new_axes = []
-        for i in range(3):
-            v = rotate_vector(self.axes[i], axis, angle)
-            new_axes.append([self.axes[i][0] + v[0], self.axes[i][1] + v[1], self.axes[i][2] + v[2]])
-        self.axes = np.array(new_axes)
+    # def change_orientation(self, axis, angle):
+    #     new_axes = []
+    #     for i in range(3):
+    #         v = rotate_vector(self.axes[i], axis, angle)
+    #         new_axes.append([self.axes[i][0] + v[0], self.axes[i][1] + v[1], self.axes[i][2] + v[2]])
+    #     self.axes = np.array(new_axes)
     
     '''def render_edges(self, edges):
         return_list = []

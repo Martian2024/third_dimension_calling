@@ -1,10 +1,10 @@
-from main import Mesh, Camera, rotate_vector
+from main import Mesh, Camera, rotate_vector, get_projection, get_vector_length
 from ship import Player
 from ambient import Star
 import pygame
 import numpy as np
 from random import randint
-from math import degrees, asin, sqrt
+from math import degrees, asin, sqrt, acos
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -55,12 +55,12 @@ def draw_game():
     #player.rotation_v[1] = player.max_rotation_v[1] * (pygame.mouse.get_pos()[0] - WIDTH / 2) / WIDTH
     #player.rotation_v[2] = player.max_rotation_v[2] * (pygame.mouse.get_pos()[1] - HEIGHT / 2) / HEIGHT
     player.update()
-    camera.position = player.meshes[0].center + player.meshes[0].axes[0] * -5 + player.meshes[0].axes[1] * 2
+    camera.position = player.meshes[0].center + player.meshes[0].axes[0] * -10 + player.meshes[0].axes[1] * 0
     camera_pointing_vector = player.meshes[0].center - camera.position
-    camera.angle_y = degrees(asin(camera_pointing_vector[2] / sqrt(camera_pointing_vector[0] ** 2 + camera_pointing_vector[2] ** 2)))
-    camera.change_orientation(camera.axes[1], camera.angle_y)
-    camera.angle_z = -degrees(asin(camera_pointing_vector[1] / sqrt(camera_pointing_vector[0] ** 2 + camera_pointing_vector[1] ** 2)))
-    camera.change_orientation(camera.axes[2], camera.angle_z)
+    #camera.angle_y = degrees(asin(camera_pointing_vector[2] / sqrt(camera_pointing_vector[0] ** 2 + camera_pointing_vector[2] ** 2)))
+    #camera.angle_z = -degrees(asin(camera_pointing_vector[1] / get_vector_length(camera_pointing_vector)))
+    #camera.angle_x = (90 - degrees(acos(get_projection(np.array([0, 1, 0]), player.meshes[0].axes[2]) / get_vector_length(player.meshes[0].axes[2]))))
+    print(camera.angle_x, camera.angle_y, camera.angle_z)
     for mesh in player.meshes:
         mesh.update()
         camera.render_mesh(mesh)
