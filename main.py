@@ -76,7 +76,6 @@ def rotate_vector(vector, axis, angle):
 class Camera:
     def __init__(self, position: np.ndarray, angle_x: Union[int, float], angle_y: Union[int, float], angle_z: Union[int, float], screen, width, height):
         self.position = position
-        self.angle_x = angle_x
         self.angle_y = angle_y
         self.angle_z = angle_z
         self.vision_x = 55
@@ -87,6 +86,7 @@ class Camera:
         self.background = 30
         self.screen = screen
         self.axes = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        self.visibility_rad = 500
 
 
     def translate_points(self, points):
@@ -100,11 +100,7 @@ class Camera:
         return_list = []
         points = self.translate_points(points)
         points = self.rotate_around_axis(-self.angle_y, np.array([0, 1, 0]), points)
-        new_z_axis = np.array([0, 0, 1]) + rotate_vector(np.array([0, 0, 1]), np.array([0, 1, 0]), self.angle_y)
-        points = self.rotate_around_axis(-self.angle_z, -new_z_axis, points)
-        new_x_axis = np.array([1, 0, 0]) + rotate_vector(np.array([0, 0, 1]), np.array([0, 1, 0]), self.angle_y)
-        new_x_axis += rotate_vector(new_x_axis, new_z_axis, self.angle_z)
-        #points = self.rotate_around_axis(-self.angle_x, new_x_axis, points)
+        points = self.rotate_around_axis(-self.angle_z, np.array([0, 0, 1]), points)
         for vector in points:
             try:
                 if vector[0] >= 0:
@@ -265,10 +261,12 @@ class Camera:
 
         return sqrt(min(dist_BA, dist_BC, dist_CA) ** 2 + length ** 2)
     
-    def render_polygon(self, polygon):
+    def render_polygon(self, polygon, radiating=False):
         polygon.update()
         points = self.render_points(polygon.points)
-        return [max(i * polygon.cos_theta, self.background) for i in polygon.color], points
+        if not radiating:
+            return [max(i * polygon.cos_theta, self.background) for i in polygon.color], points
+        return polygon.color, points
     
     def get_distance_to_point(self, point):
         return sqrt((point[0] - self.position[0]) ** 2 + (point[1] - self.position[1]) ** 2 + (point[2] - self.position[2]) ** 2 )
@@ -279,7 +277,7 @@ class Camera:
     def render_mesh(self, mesh):
         for i in sorted(filter(lambda i: self.get_projection(i.normal, np.array([self.position[0] - i.center[0], self.position[1] - i.center[1], self.position[2] - i.center[2]])) > 0, mesh.polygons), key=lambda x: (self.getDistance(x), self.get_distance_to_point(x.center)), reverse=True):
             #pygame.draw.polygon(self.screen, *self.render_polygon(i))
-            pygame.draw.polygon(self.screen, *self.render_polygon(i))
+            pygame.draw.polygon(self.screen, *self.render_polygon(i, mesh.radiating))
 
 class Polygon:
     def __init__(self, points, color, light_source):
@@ -309,24 +307,27 @@ class Mesh():
         self.rotation_a = np.array([0.0, 0.0, 0.0])
         self.rotational_mass = 1
         self.mass = 1
-        self.collision_sphere_rad = min(map(lambda x: min(x), [[sqrt((point[0] - self.center[0]) ** 2 + (point[1] - self.center[1]) ** 2 + (point[2] - self.center[2]) ** 2 ) for point in polygon.points] for polygon in self.polygons]))
+        self.collision_sphere_rad = min(map(lambda x: max(x), [[sqrt((point[0] - self.center[0]) ** 2 + (point[1] - self.center[1]) ** 2 + (point[2] - self.center[2]) ** 2 ) for point in polygon.points] for polygon in self.polygons]))
         self.visible = True
         self.axes = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        self.radiating = False
+        print(self.collision_sphere_rad)
 
 
     def from_file(filepath, color, lightsource, center=[0, 0, 0]):
         m = mesh.Mesh.from_file(filepath)
         polygons = []
         for i in range(len(m.x)):
-            p0 = np.array([m.x[i][0], m.z[i][0], m.y[i][0]])
-            p1 = np.array([m.x[i][1], m.z[i][1], m.y[i][1]])
-            p2 = np.array([m.x[i][2], m.z[i][2], m.y[i][2]])
+            p0 = np.array([m.x[i][0], m.z[i][0], m.y[i][0]]) + center
+            p1 = np.array([m.x[i][1], m.z[i][1], m.y[i][1]]) + center
+            p2 = np.array([m.x[i][2], m.z[i][2], m.y[i][2]]) + center
             polygon = Polygon([p0, p2, p1], color, lightsource)
             polygons.append(polygon)
         
         return Mesh(polygons, center)
     
     def move(self):
+        self.center += self.velocity
         for polygon in self.polygons:
             polygon.points = list(map(lambda point:  point + self.velocity, polygon.points))
             polygon.update()
@@ -354,6 +355,12 @@ class Mesh():
         self.rotate_around_axis(self.axes[0], self.rotation_v[0], self.center)
         self.rotate_around_axis(self.axes[1], self.rotation_v[1], self.center)
         self.rotate_around_axis(self.axes[2], self.rotation_v[2], self.center)
+
+    def check_collision(self, mesh):
+        if get_vector_length(mesh.center - self.center) < self.collision_sphere_rad + mesh.collision_sphere_rad:
+            return True
+        else:
+            return False
 
     '''def check_collision(self, other_mesh):
         for other_polygon in filter(lambda i: get_projection(i.normal, np.array([self.center[0] - i.center[0], self.center[1] - i.center[1], self.center[2] - i.center[2]])), other_mesh.polygons):
