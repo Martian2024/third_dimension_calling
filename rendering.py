@@ -11,8 +11,8 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
-HEIGHT = 900
-WIDTH = 1200
+HEIGHT = 600
+WIDTH = 900
 
 
 pygame.init()
@@ -67,8 +67,9 @@ POLYGONS = [Polygon([A, B, C], BLUE, LIGHTSOURCE), Polygon([A, C, D], BLUE, LIGH
 #MESHES = [Mesh.from_file('Chest_01.stl', WHITE, LIGHTSOURCE)]
 #MESHES = [Mesh(POLYGONS[:12])]
 #ship = Mesh.from_file('cube3.stl', WHITE, LIGHTSOURCE)
-#MESHES = [Mesh.from_file('player_ship.stl', WHITE, LIGHTSOURCE)]
-MESHES = [Mesh.from_file('ship.stl', WHITE, LIGHTSOURCE)]
+MESHES = [Mesh.from_file('player_ship.stl', WHITE, LIGHTSOURCE)]
+#MESHES = [Mesh.from_file('asteroid.stl', WHITE, LIGHTSOURCE)]
+#MESHES = [Mesh.from_file('ship.stl', WHITE, LIGHTSOURCE)]
 MESHES[0].rotation_v[2] = 3
 #MESHES = [Mesh([Polygon([A, B, C], BLUE, LIGHTSOURCE)])]
 #print(MESHES[0].polygons[0].points[0].x)

@@ -1,0 +1,120 @@
+import pygame
+from main import Camera, Polygon, Mesh, rotate_vector, get_vector_length
+from math import radians, degrees, acos
+from stl import mesh
+from random import randint
+import numpy as np
+from game_classes import Star
+
+
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+
+HEIGHT = 600
+WIDTH = 900
+
+class RenderingCamera(Camera):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.speed_vector = np.array([0.0, 0.0, 0.0])
+
+
+pygame.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+camera = RenderingCamera(np.array([-5.0, 0.0, 0.0]), 0, 0, 0, screen, WIDTH, HEIGHT)
+pygame.display.set_caption("My Game")
+clock = pygame.time.Clock()
+
+ASTEROIDS = []
+STARS = []
+
+flag_traking_mouse = False
+mouse_prev_pos = []
+add_angle_y = 0
+add_angle_z = 0
+
+def generate_world():
+    vector = np.array([100000000000000.0, 0.0, 0.0])
+    v = rotate_vector(vector, np.array([0, 1, 0]), randint(0, 360))
+    vector += v
+    sun = Star(vector)
+    sun.size = 20
+    STARS.append(sun)
+
+    for i in range(200):
+        vector = np.array([100000000000000.0, 0.0, 0.0])
+        v = rotate_vector(vector, np.array([0, 0, 1]), randint(0, 360))
+        vector += v
+        v = rotate_vector(vector, np.array([0, 1, 0]), randint(0, 360))
+        vector += v
+        STARS.append(Star(vector))
+
+    for i in range(5):
+        asteroid = Mesh.from_file('asteroid.stl', (98, 59, 59), STARS[0].pos, center=[randint(-10, 10), randint(-10, 10), randint(-10, 10)])
+        asteroid.velocity = np.array([0, 0, 0])
+        asteroid.rotation_v = np.array([randint(-200, 200) / 100, randint(-200, 200) / 100, randint(-200, 200) / 100])
+        ASTEROIDS.append(asteroid)
+
+generate_world()
+running = True
+while running:
+    clock.tick(camera.fps)
+
+    for event in pygame.event.get():
+        keys = pygame.key.get_pressed()
+        if event.type == pygame.QUIT:
+            running = False
+        elif keys[pygame.K_RIGHT]:
+            camera.angle_y += 3
+        elif keys[pygame.K_LEFT]:
+            camera.angle_y -= 3
+        elif keys[pygame.K_UP]:
+            camera.angle_z -= 3
+        elif keys[pygame.K_DOWN]:
+            camera.angle_z += 3
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            flag_traking_mouse = True
+            mouse_prev_pos = pygame.mouse.get_pos()
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            flag_traking_mouse = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_w:
+            camera.speed_vector[0] += 0.1
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_s:
+            camera.speed_vector[0] -= 0.1
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_d:
+            camera.speed_vector[1] += 0.1
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_a:
+            camera.speed_vector[1] -= 0.1
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_LSHIFT:
+            camera.speed_vector[2] += 0.1
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_LCTRL:
+            camera.speed_vector[2] -= 0.1
+    
+    if flag_traking_mouse:
+        add_angle_y += (pygame.mouse.get_pos()[0] - mouse_prev_pos[0]) / 10
+        add_angle_z += (pygame.mouse.get_pos()[1] - mouse_prev_pos[1]) / 10
+        mouse_prev_pos = pygame.mouse.get_pos()
+        
+
+    screen.fill(BLACK)
+    camera.position += camera.speed_vector
+    print(camera.position)
+    camera.angle_y = add_angle_y
+    camera.angle_z = add_angle_z
+
+    for star in STARS:
+            pygame.draw.circle(screen, WHITE, camera.render_points([star.pos])[0], star.size)
+        
+    for mesh in sorted(ASTEROIDS, key=lambda x: (camera.get_distance_to_point(x.center)), reverse=True):
+        mesh.update()
+        camera.render_mesh(mesh)
+        
+
+    pygame.display.flip()
+
+    
+
+pygame.quit()
